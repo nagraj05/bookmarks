@@ -80,9 +80,10 @@ jobs:
         shell: bash
         run: |
           release_version="${GITHUB_REF_NAME#v}"
-          awk -v version="$release_version" '
-            $0 ~ "^## \\[" version "\\]" { capture = 1; next }
-            capture && /^## \\[/ { exit }
+          release_heading="## [$release_version]"
+          awk -v heading="$release_heading" '
+            index($0, heading) == 1 { capture = 1; next }
+            capture && index($0, "## [") == 1 { exit }
             capture { print }
           ' CHANGELOG.md > release-notes.md
 
