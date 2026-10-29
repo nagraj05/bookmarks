@@ -103,3 +103,20 @@ src/
 ## Releases
 
 Every release has a matching Git tag, GitHub release notes, and entry in [CHANGELOG.md](CHANGELOG.md).
+
+Pushing a tag whose name starts with `v` automatically runs the Android release workflow. The workflow checks the project, builds an installable APK with EAS, creates the GitHub release with generated notes, and attaches the APK. EAS increments the Android `versionCode` for every release build so new APKs can update existing installations.
+
+### One-time repository setup
+
+Create an Expo access token at [expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens), then add it to the GitHub repository under **Settings → Secrets and variables → Actions** as a repository secret named `EXPO_TOKEN`.
+
+### Publish a release
+
+Update `CHANGELOG.md` and the app version, commit and push the changes to `main`, then create and push a version tag:
+
+```bash
+git tag -a v1.0.1 -m "Bookmarks v1.0.1"
+git push origin v1.0.1
+```
+
+The workflow is available under the repository's **Actions** tab. A release is published only after linting, type checking, Expo Doctor, and the EAS build succeed.

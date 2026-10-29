@@ -1,0 +1,91 @@
+name: Android release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Expo authentication
+        shell: bash
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "EXPO_TOKEN is not configured. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Run quality checks
+        run: |
+          npx expo lint
+          npx tsc --noEmit
+          npx expo-doctor
+
+      - name: Build Android APK with EAS
+        id: eas-build
+        shell: bash
+        run: |
+          npx --yes eas-cli@latest build \
+            --platform android \
+            --profile preview \
+            --non-interactive \
+            --wait \
+            --json > eas-build.json
+
+          artifact_url="$(jq -r '.[0].artifacts.buildUrl // empty' eas-build.json)"
+          if [ -z "$artifact_url" ]; then
+            echo "EAS did not return an APK artifact URL."
+            cat eas-build.json
+            exit 1
+          fi
+
+          echo "artifact_url=$artifact_url" >> "$GITHUB_OUTPUT"
+
+      - name: Download APK
+        shell: bash
+        run: |
+          asset_name="bookmarks-${GITHUB_REF_NAME}-android.apk"
+          curl --fail --location --retry 3 \
+            --output "$asset_name" \
+            "${{ steps.eas-build.outputs.artifact_url }}"
+          echo "ASSET_NAME=$asset_name" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "$ASSET_NAME" --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" "$ASSET_NAME" \
+              --verify-tag \
+              --title "Bookmarks $GITHUB_REF_NAME" \
+              --generate-notes
+          fi
