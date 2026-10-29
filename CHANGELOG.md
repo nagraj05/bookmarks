@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-10-30
+
+### Fixed
+
+- Prevented incoming shares from becoming stuck on the native logo screen during cold starts
+- Added a safe retry screen when app-lock settings cannot be read from the local database
+
 ## [1.3.0] - 2026-10-29
 
 ### Added
@@ -91,7 +98,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/nagraj05/bookmarks/compare/v1.3.0...v1.3.1
+[1.3.0]: https://github.com/nagraj05/bookmarks/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/nagraj05/bookmarks/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/nagraj05/bookmarks/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/nagraj05/bookmarks/releases/tag/v1.0.0

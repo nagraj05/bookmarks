@@ -1,8 +1,10 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useSegments } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { getSharedPayloads } from 'expo-sharing';
 import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LaunchAnimation } from '@/components/launch-animation';
@@ -16,12 +18,7 @@ SplashScreen.setOptions({ duration: 200, fade: true });
 
 function AppNavigation() {
   const { resolvedTheme } = useThemePreference();
-  const segments = useSegments();
-  const [showLaunch] = useState(() => segments[0] !== 'handle-share');
-
-  useEffect(() => {
-    if (!showLaunch) SplashScreen.hide();
-  }, [showLaunch]);
+  const [showLaunch] = useState(() => getSharedPayloads().length === 0);
 
   return (
     <ThemeProvider value={resolvedTheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -39,17 +36,27 @@ function AppNavigation() {
 }
 
 export default function RootLayout() {
+  const hideNativeSplash = useCallback(() => {
+    SplashScreen.hide();
+  }, []);
+
   return (
-    <SafeAreaProvider>
-      <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDatabase}>
-        <ThemePreferenceProvider>
-          <AppLockProvider>
-            <GlobalLoadingProvider>
-              <AppNavigation />
-            </GlobalLoadingProvider>
-          </AppLockProvider>
-        </ThemePreferenceProvider>
-      </SQLiteProvider>
-    </SafeAreaProvider>
+    <View onLayout={hideNativeSplash} style={styles.root}>
+      <SafeAreaProvider>
+        <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDatabase}>
+          <ThemePreferenceProvider>
+            <AppLockProvider>
+              <GlobalLoadingProvider>
+                <AppNavigation />
+              </GlobalLoadingProvider>
+            </AppLockProvider>
+          </ThemePreferenceProvider>
+        </SQLiteProvider>
+      </SafeAreaProvider>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#FFD400' },
+});

@@ -48,6 +48,8 @@ export function AppLockProvider({ children }: PropsWithChildren) {
   const db = useSQLiteContext();
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [enabled, setEnabled] = useState(false);
   const [locked, setLocked] = useState(false);
   const [authenticating, setAuthenticating] = useState(false);
@@ -55,23 +57,27 @@ export function AppLockProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     let active = true;
 
-    void db
-      .getAllAsync<{ key: string; value: string }>(
-        "SELECT key, value FROM app_settings WHERE key IN ('app_lock_enabled', 'app_lock_pending')",
-      )
-      .then((rows) => {
+    void (async () => {
+      try {
+        const rows = await db.getAllAsync<{ key: string; value: string }>(
+          "SELECT key, value FROM app_settings WHERE key IN ('app_lock_enabled', 'app_lock_pending')",
+        );
         if (!active) return;
         const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]));
         const nextEnabled = settings.app_lock_enabled === 'true';
         setEnabled(nextEnabled);
         setLocked(nextEnabled && settings.app_lock_pending === 'true');
-        setLoading(false);
-      });
+      } catch {
+        if (active) setLoadFailed(true);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
 
     return () => {
       active = false;
     };
-  }, [db]);
+  }, [db, loadAttempt]);
 
   useEffect(() => {
     const subscription = addScreenOffListener(() => {
@@ -147,6 +153,26 @@ export function AppLockProvider({ children }: PropsWithChildren) {
 
   if (loading) {
     return <View style={[styles.loading, { backgroundColor: theme.background }]} />;
+  }
+
+  if (loadFailed) {
+    return (
+      <SafeAreaView style={[styles.lockedScreen, { backgroundColor: theme.background }]}>
+        <BrutalCard backgroundColor={theme.pink} style={styles.lockCard}>
+          <Text style={styles.lockTitle}>UNABLE TO OPEN BOOKMARKS</Text>
+          <Text style={styles.lockBody}>Your saved links are safe. Try loading the database again.</Text>
+          <BrutalButton
+            backgroundColor={theme.yellow}
+            onPress={() => {
+              setLoading(true);
+              setLoadFailed(false);
+              setLoadAttempt((value) => value + 1);
+            }}>
+            TRY AGAIN
+          </BrutalButton>
+        </BrutalCard>
+      </SafeAreaView>
+    );
   }
 
   return (
