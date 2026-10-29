@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-29
+
+### Added
+
+- Interactive horizontal paging between Library, Folders, and Settings
+- Live adjacent-screen previews that follow the finger during partial swipes
+- Background folder preloading so the Folders preview is populated before navigation settles
+
+### Changed
+
+- Preserved the existing bottom navigation design while adding swipe and tap navigation
+
+### Fixed
+
+- GitHub releases now publish version-specific notes from this changelog instead of an empty compare-only entry
+
 ## [1.1.0] - 2026-10-29
 
 ### Added
@@ -47,6 +63,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/nagraj05/bookmarks/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/nagraj05/bookmarks/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/nagraj05/bookmarks/releases/tag/v1.0.0
