@@ -110,4 +110,54 @@ export async function migrateDatabase(db: SQLiteDatabase) {
       PRAGMA user_version = 6;
     `);
   }
+
+  if ((version?.user_version ?? 0) < 7) {
+    await db.execAsync(`
+      UPDATE bookmarks
+      SET source_key = 'tumblr'
+      WHERE normalized_url LIKE '%://tumblr.com/%'
+         OR normalized_url LIKE '%://%.tumblr.com/%';
+
+      PRAGMA user_version = 7;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 8) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS bookmark_folders (
+        bookmark_id INTEGER NOT NULL,
+        folder_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (bookmark_id, folder_id),
+        FOREIGN KEY (bookmark_id) REFERENCES bookmarks(id) ON DELETE CASCADE,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE CASCADE
+      );
+
+      INSERT OR IGNORE INTO bookmark_folders (bookmark_id, folder_id)
+      SELECT id, folder_id FROM bookmarks;
+
+      CREATE INDEX IF NOT EXISTS idx_bookmark_folders_folder ON bookmark_folders(folder_id);
+      PRAGMA user_version = 8;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 9) {
+    await db.execAsync(`
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app_folders_enabled', 'false');
+      PRAGMA user_version = 9;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 10) {
+    await db.execAsync(`
+      UPDATE bookmarks
+      SET source_key = 'spotify'
+      WHERE normalized_url LIKE '%://spotify.com/%'
+         OR normalized_url LIKE '%://%.spotify.com/%'
+         OR normalized_url LIKE '%://spotify.link/%'
+         OR normalized_url LIKE '%://%.spotify.link/%';
+
+      PRAGMA user_version = 10;
+    `);
+  }
 }

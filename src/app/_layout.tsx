@@ -1,15 +1,27 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { SQLiteProvider } from 'expo-sqlite';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { LaunchAnimation } from '@/components/launch-animation';
 import { DATABASE_NAME, migrateDatabase } from '@/lib/database';
 import { AppLockProvider } from '@/providers/app-lock';
 import { GlobalLoadingProvider } from '@/providers/global-loading';
 import { ThemePreferenceProvider, useThemePreference } from '@/providers/theme-preference';
 
+void SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ duration: 200, fade: true });
+
 function AppNavigation() {
   const { resolvedTheme } = useThemePreference();
+  const segments = useSegments();
+  const [showLaunch] = useState(() => segments[0] !== 'handle-share');
+
+  useEffect(() => {
+    if (!showLaunch) SplashScreen.hide();
+  }, [showLaunch]);
 
   return (
     <ThemeProvider value={resolvedTheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -21,6 +33,7 @@ function AppNavigation() {
         <Stack.Screen name="folder/[id]" />
         <Stack.Screen name="handle-share" />
       </Stack>
+      {showLaunch ? <LaunchAnimation /> : null}
     </ThemeProvider>
   );
 }

@@ -1,9 +1,12 @@
 import { SymbolView } from 'expo-symbols';
+import { useSQLiteContext } from 'expo-sqlite';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalCard, ScreenHeader } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
+import { getAppFoldersEnabled, setAppFoldersEnabled } from '@/lib/app-settings';
 import { useAppLock } from '@/providers/app-lock';
 import { type ThemePreference, useThemePreference } from '@/providers/theme-preference';
 
@@ -30,9 +33,35 @@ const themeOptions = [
 }[];
 
 export default function SettingsScreen() {
+  const db = useSQLiteContext();
   const theme = useTheme();
   const { preference, setPreference } = useThemePreference();
   const { enabled: appLockEnabled, authenticating, enableLock, disableLock } = useAppLock();
+  const [appFoldersEnabled, setAppFoldersEnabledState] = useState(false);
+  const [updatingAppFolders, setUpdatingAppFolders] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void getAppFoldersEnabled(db).then((enabled) => {
+      if (active) setAppFoldersEnabledState(enabled);
+    });
+    return () => {
+      active = false;
+    };
+  }, [db]);
+
+  const toggleAppFolders = async () => {
+    const enabled = !appFoldersEnabled;
+    setUpdatingAppFolders(true);
+    try {
+      await setAppFoldersEnabled(db, enabled);
+      setAppFoldersEnabledState(enabled);
+    } catch {
+      Alert.alert('Could not update app folders', 'Please try again.');
+    } finally {
+      setUpdatingAppFolders(false);
+    }
+  };
 
   const toggleAppLock = async () => {
     if (appLockEnabled) {
@@ -100,6 +129,46 @@ export default function SettingsScreen() {
           })}
         </View>
 
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>ORGANIZATION</Text>
+        <BrutalCard backgroundColor={theme.blue} style={styles.appLockCard}>
+          <View style={[styles.appLockIconWrap, { borderColor: theme.border }]}>
+            <SymbolView
+              name={{ ios: 'square.grid.2x2.fill', android: 'grid_view', web: 'grid_view' }}
+              tintColor="#111111"
+              size={25}
+              style={styles.appLockIcon}
+            />
+          </View>
+          <View style={styles.rowCopy}>
+            <Text style={styles.darkTitle}>Organize by app</Text>
+            <Text style={styles.darkBody}>Show automatic folders for apps you share links from.</Text>
+          </View>
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel="Organize by app"
+            accessibilityState={{ checked: appFoldersEnabled, disabled: updatingAppFolders }}
+            disabled={updatingAppFolders}
+            onPress={() => void toggleAppFolders()}
+            style={[
+              styles.toggle,
+              {
+                backgroundColor: appFoldersEnabled ? theme.green : '#FFFFFF',
+                borderColor: theme.border,
+                opacity: updatingAppFolders ? 0.55 : 1,
+              },
+            ]}>
+            <View
+              style={[
+                styles.toggleThumb,
+                {
+                  backgroundColor: appFoldersEnabled ? '#111111' : '#7B7380',
+                  transform: [{ translateX: appFoldersEnabled ? 22 : 0 }],
+                },
+              ]}
+            />
+          </Pressable>
+        </BrutalCard>
+
         <Text style={[styles.sectionTitle, { color: theme.text }]}>PRIVACY</Text>
         <BrutalCard backgroundColor={theme.pink} style={styles.appLockCard}>
           <View style={[styles.appLockIconWrap, { borderColor: theme.border }]}>
@@ -159,7 +228,7 @@ export default function SettingsScreen() {
           ))}
         </View>
 
-        <Text style={[styles.version, { color: theme.textSecondary }]}>BOOKMARKS · FIRST LOCAL BUILD</Text>
+        <Text style={[styles.version, { color: theme.textSecondary }]}>BOOKMARKS · Created by Nagraj Tadingi</Text>
       </ScrollView>
     </SafeAreaView>
   );

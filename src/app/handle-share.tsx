@@ -17,7 +17,9 @@ export default function HandleShareScreen() {
   const { runWithLoader } = useGlobalLoading();
   const { sharedPayloads, clearSharedPayloads, error } = useIncomingShare();
   const handled = useRef(false);
-  const [phase, setPhase] = useState<'idle' | 'processing' | 'saved' | 'duplicate' | 'invalid' | 'failed'>('idle');
+  const [phase, setPhase] = useState<
+    'idle' | 'processing' | 'preview' | 'saved' | 'duplicate' | 'invalid' | 'failed'
+  >('idle');
 
   useEffect(() => {
     if (handled.current || sharedPayloads.length === 0) return;
@@ -38,16 +40,20 @@ export default function HandleShareScreen() {
       try {
         await runWithLoader(async () => {
           const result = await addBookmark(db, { url, folderId: 1 });
-          setPhase(result.duplicate ? 'duplicate' : 'saved');
           if (!result.duplicate) {
-            void fetchLinkMetadata(url).then((metadata) => updateBookmarkMetadata(db, result.id, metadata));
+            setPhase('preview');
+            const metadata = await fetchLinkMetadata(url);
+            await updateBookmarkMetadata(db, result.id, metadata);
           }
+          setPhase(result.duplicate ? 'duplicate' : 'saved');
           clearSharedPayloads();
           setTimeout(() => {
-            if (Platform.OS === 'android') BackHandler.exitApp();
-            else router.replace('/');
+            router.replace('/');
+            if (Platform.OS === 'android') {
+              setTimeout(() => BackHandler.exitApp(), 100);
+            }
           }, 250);
-        }, 'Saving shared link…');
+        }, 'Saving…');
       } catch {
         setPhase('failed');
         clearSharedPayloads();
@@ -64,8 +70,8 @@ export default function HandleShareScreen() {
         : phase === 'duplicate'
           ? 'Already saved — returning…'
           : phase === 'saved'
-            ? 'Saved to Inbox — returning…'
-            : 'Reading shared link…';
+              ? 'Saved to Inbox — returning…'
+              : 'Saving…';
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -74,7 +80,9 @@ export default function HandleShareScreen() {
           <Text style={styles.mark}>↗</Text>
           <Text style={styles.title}>BOOKMARKS</Text>
           <Text style={styles.message}>{message}</Text>
-          {phase === 'idle' || phase === 'processing' ? <ActivityIndicator color="#111111" /> : null}
+          {phase === 'idle' || phase === 'processing' || phase === 'preview' ? (
+            <ActivityIndicator color="#111111" />
+          ) : null}
         </BrutalCard>
       </View>
     </SafeAreaView>

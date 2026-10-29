@@ -22,10 +22,8 @@ export default function AddBookmarkScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    void runWithLoader(async () => {
-      setFolders(await getFolders(db));
-    }, 'Loading folders…');
-  }, [db, runWithLoader]);
+    void getFolders(db).then(setFolders);
+  }, [db]);
 
   const save = async () => {
     setSaving(true);

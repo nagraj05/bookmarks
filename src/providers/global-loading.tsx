@@ -32,8 +32,8 @@ function GlobalLoader({ visible, message }: { visible: boolean; message: string 
     const animation = Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
-        duration: 900,
-        easing: Easing.linear,
+        duration: 700,
+        easing: Easing.inOut(Easing.quad),
         useNativeDriver: true,
       }),
     );
@@ -48,27 +48,25 @@ function GlobalLoader({ visible, message }: { visible: boolean; message: string 
         accessibilityLiveRegion="polite"
         style={styles.overlay}>
         <BrutalCard backgroundColor={theme.yellow} style={styles.loaderCard}>
-          <Animated.View
-            style={[
-              styles.loaderMark,
-              {
-                borderColor: theme.border,
-                transform: [
-                  {
-                    rotate: rotation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '360deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}>
-            <View style={[styles.block, styles.blockTopLeft, { backgroundColor: theme.pink }]} />
-            <View style={[styles.block, styles.blockTopRight, { backgroundColor: theme.blue }]} />
-            <View style={[styles.block, styles.blockBottomLeft, { backgroundColor: theme.green }]} />
-            <View style={[styles.block, styles.blockBottomRight, { backgroundColor: theme.purple }]} />
-          </Animated.View>
-          <Text style={styles.loaderTitle}>HOLD TIGHT</Text>
+          <View style={[styles.loaderShadow, { backgroundColor: theme.shadow }]}>
+            <Animated.View
+              style={[
+                styles.loaderMark,
+                {
+                  backgroundColor: theme.pink,
+                  borderColor: theme.border,
+                  transform: [
+                    {
+                      rotate: rotation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '180deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+          </View>
           <Text style={styles.loaderMessage}>{message}</Text>
         </BrutalCard>
       </View>
@@ -94,7 +92,7 @@ export function GlobalLoadingProvider({ children }: PropsWithChildren) {
       activeTasks.current += 1;
       setMessage(nextMessage);
       if (firstTask) {
-        showTimer.current = setTimeout(() => setVisible(true), 140);
+        showTimer.current = setTimeout(() => setVisible(true), 250);
       }
 
       try {
@@ -131,22 +129,32 @@ const styles = StyleSheet.create({
     padding: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.38)',
   },
-  loaderCard: { width: '100%', maxWidth: 300, padding: 24, alignItems: 'center', gap: 8 },
+  loaderCard: {
+    width: '100%',
+    maxWidth: 280,
+    minHeight: 72,
+    paddingHorizontal: 18,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loaderShadow: {
+    width: 34,
+    height: 34,
+    borderRadius: 4,
+    transform: [{ translateX: 4 }, { translateY: 4 }],
+  },
   loaderMark: {
-    width: 64,
-    height: 64,
-    marginBottom: 7,
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    top: -4,
+    left: -4,
     borderWidth: 3,
-    borderRadius: 15,
-    backgroundColor: '#111111',
+    borderRadius: 3,
   },
-  block: { position: 'absolute', width: 21, height: 21, borderRadius: 5 },
-  blockTopLeft: { top: 7, left: 7 },
-  blockTopRight: { top: 7, right: 7 },
-  blockBottomLeft: { bottom: 7, left: 7 },
-  blockBottomRight: { right: 7, bottom: 7 },
-  loaderTitle: { color: '#111111', fontSize: 20, lineHeight: 24, fontWeight: '900', letterSpacing: 0.8 },
-  loaderMessage: { color: '#29232F', fontSize: 13, lineHeight: 18, fontWeight: '700', textAlign: 'center' },
+  loaderMessage: { flex: 1, color: '#111111', fontSize: 14, lineHeight: 18, fontWeight: '900' },
 });

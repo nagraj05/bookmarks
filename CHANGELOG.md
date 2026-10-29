@@ -6,9 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Tumblr source detection and social-card support
+- Long-press multi-select in folders with Select All, multi-folder Move and Copy, and bulk delete-to-Trash actions
+- Optional smart app folders with official source icons and automatic bookmark grouping
+- Spotify link detection, migration, card branding, and smart-folder support
+- Two-column app-folder grids with long-press Select All and bulk delete-to-Trash
+
+### Changed
+
+- Social cards now show post text or captions instead of usernames and domains
+- Branded app cards no longer show raw source domains such as `open.spotify.com`
+- Instagram, X, Substack, Tumblr, LinkedIn, and Threads cards now use bundled brand icons
+- Emoji entities in social captions now render as native emoji
+- Replaced the large multi-block loader with a compact neo-brutalist loading card
+- Simplified the incoming-share progress message to “Saving…”
+- Limited the default Recently Saved section to the four newest bookmarks
+- Removed loader flashes from navigation reads and delayed overlays for fast background work
+- Added a short Reanimated neo-brutalist launch sequence before the Library appears
+
 ### Fixed
 
 - Android release automation now extracts changelog notes reliably on Linux runners
+- Shared links now finish saving their preview metadata before Android returns to the source app
+- Reopening Bookmarks after sharing now lands on the Library instead of a stale share confirmation screen
 
 ## [1.2.0] - 2026-10-29
 

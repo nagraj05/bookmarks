@@ -8,7 +8,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookmarkCard } from '@/components/bookmark-card';
 import { BrutalButton, BrutalCard, EmptyState, ScreenHeader } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
-import { useGlobalLoading } from '@/providers/global-loading';
 import {
   type Bookmark,
   type BookmarkStatus,
@@ -38,7 +37,6 @@ const filterLabels: { key: LibraryFilter; label: string; icon?: keyof typeof fil
 export default function LibraryScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
-  const { runWithLoader } = useGlobalLoading();
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
@@ -49,26 +47,25 @@ export default function LibraryScreen() {
 
   const load = useCallback(async () => {
     try {
-      await runWithLoader(async () => {
-        const status: BookmarkStatus = filter === 'archived' ? 'archived' : filter === 'trash' ? 'trash' : 'active';
-        const [rows, nextStats, nextSources] = await Promise.all([
-          listBookmarks(db, {
-            status,
-            favoritesOnly: filter === 'favorites',
-            query,
-            sourceKey: sourceFilter ?? undefined,
-          }),
-          getLibraryStats(db),
-          getBookmarkSources(db, status),
-        ]);
-        setBookmarks(rows);
-        setStats(nextStats);
-        setSources(nextSources);
-      }, query ? 'Searching bookmarks…' : 'Loading bookmarks…');
+      const status: BookmarkStatus = filter === 'archived' ? 'archived' : filter === 'trash' ? 'trash' : 'active';
+      const [rows, nextStats, nextSources] = await Promise.all([
+        listBookmarks(db, {
+          status,
+          favoritesOnly: filter === 'favorites',
+          query,
+          sourceKey: sourceFilter ?? undefined,
+          limit: filter === 'all' && !query.trim() && sourceFilter === null ? 4 : undefined,
+        }),
+        getLibraryStats(db),
+        getBookmarkSources(db, status),
+      ]);
+      setBookmarks(rows);
+      setStats(nextStats);
+      setSources(nextSources);
     } finally {
       setLoading(false);
     }
-  }, [db, filter, query, runWithLoader, sourceFilter]);
+  }, [db, filter, query, sourceFilter]);
 
   useFocusEffect(
     useCallback(() => {

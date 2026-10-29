@@ -3,14 +3,16 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 export type BookmarkStatus = 'active' | 'archived' | 'trash';
 
 export const SOURCE_APPS = {
-  x: { label: 'X', color: '#111111' },
-  instagram: { label: 'Instagram', color: '#FF6B9E' },
+  x: { label: 'X', color: '#000000' },
+  instagram: { label: 'Instagram', color: '#E4405F' },
   facebook: { label: 'Facebook', color: '#63A4FF' },
   youtube: { label: 'YouTube', color: '#FF5C5C' },
   reddit: { label: 'Reddit', color: '#FF8A3D' },
-  linkedin: { label: 'LinkedIn', color: '#63D7FF' },
+  spotify: { label: 'Spotify', color: '#1DB954' },
+  linkedin: { label: 'LinkedIn', color: '#0A66C2' },
   tiktok: { label: 'TikTok', color: '#B59CFF' },
-  threads: { label: 'Threads', color: '#C9C2D0' },
+  tumblr: { label: 'Tumblr', color: '#36465D' },
+  threads: { label: 'Threads', color: '#000000' },
   substack: { label: 'Substack', color: '#FF6719' },
   pinterest: { label: 'Pinterest', color: '#FF7070' },
   other: { label: 'Other', color: '#8BE28B' },
@@ -91,8 +93,10 @@ export function sourceFromUrl(url: string): SourceKey {
   if (domain === 'facebook.com' || domain.endsWith('.facebook.com') || domain === 'fb.watch') return 'facebook';
   if (domain === 'youtube.com' || domain.endsWith('.youtube.com') || domain === 'youtu.be') return 'youtube';
   if (domain === 'reddit.com' || domain.endsWith('.reddit.com') || domain === 'redd.it') return 'reddit';
+  if (domain === 'spotify.com' || domain.endsWith('.spotify.com') || domain === 'spotify.link' || domain.endsWith('.spotify.link')) return 'spotify';
   if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com') || domain === 'lnkd.in') return 'linkedin';
   if (domain === 'tiktok.com' || domain.endsWith('.tiktok.com')) return 'tiktok';
+  if (domain === 'tumblr.com' || domain.endsWith('.tumblr.com')) return 'tumblr';
   if (
     domain === 'threads.net' ||
     domain.endsWith('.threads.net') ||
@@ -108,7 +112,8 @@ export async function getFolders(db: SQLiteDatabase) {
   return db.getAllAsync<Folder>(`
     SELECT f.*, COUNT(CASE WHEN b.status = 'active' THEN 1 END) AS bookmark_count
     FROM folders f
-    LEFT JOIN bookmarks b ON b.folder_id = f.id
+    LEFT JOIN bookmark_folders bf ON bf.folder_id = f.id
+    LEFT JOIN bookmarks b ON b.id = bf.bookmark_id
     GROUP BY f.id
     ORDER BY CASE WHEN f.id = 1 THEN 0 ELSE 1 END, f.name COLLATE NOCASE
   `);
@@ -136,6 +141,15 @@ export async function deleteFolder(db: SQLiteDatabase, id: number) {
 
   await db.withTransactionAsync(async () => {
     await db.runAsync(
+      `INSERT OR IGNORE INTO bookmark_folders (bookmark_id, folder_id)
+       SELECT bf.bookmark_id, 1
+       FROM bookmark_folders bf
+       JOIN bookmarks b ON b.id = bf.bookmark_id
+       WHERE bf.folder_id = ? AND b.folder_id = ?`,
+      id,
+      id,
+    );
+    await db.runAsync(
       'UPDATE bookmarks SET folder_id = 1, updated_at = CURRENT_TIMESTAMP WHERE folder_id = ?',
       id,
     );
@@ -146,12 +160,18 @@ export async function deleteFolder(db: SQLiteDatabase, id: number) {
 export async function listBookmarks(db: SQLiteDatabase, filters: BookmarkFilters = {}) {
   const clauses = ['1 = 1'];
   const params: (string | number)[] = [];
+  const folderJoin =
+    filters.folderId !== undefined ? 'JOIN folders f ON f.id = ?' : 'JOIN folders f ON f.id = b.folder_id';
+
+  if (filters.folderId !== undefined) params.push(filters.folderId);
 
   clauses.push('b.status = ?');
   params.push(filters.status ?? 'active');
 
   if (filters.folderId !== undefined) {
-    clauses.push('b.folder_id = ?');
+    clauses.push(
+      'EXISTS (SELECT 1 FROM bookmark_folders bf WHERE bf.bookmark_id = b.id AND bf.folder_id = ?)',
+    );
     params.push(filters.folderId);
   }
   if (filters.favoritesOnly) {
@@ -171,7 +191,7 @@ export async function listBookmarks(db: SQLiteDatabase, filters: BookmarkFilters
   return db.getAllAsync<Bookmark>(
     `SELECT b.*, f.name AS folder_name, f.color AS folder_color
      FROM bookmarks b
-     JOIN folders f ON f.id = b.folder_id
+     ${folderJoin}
      WHERE ${clauses.join(' AND ')}
      ORDER BY b.created_at DESC
      ${limit}`,
@@ -198,7 +218,16 @@ export async function addBookmark(
     'SELECT id FROM bookmarks WHERE normalized_url = ?',
     normalizedUrl,
   );
-  if (existing) return { id: existing.id, duplicate: true as const };
+  if (existing) {
+    if (input.folderId !== undefined) {
+      await db.runAsync(
+        'INSERT OR IGNORE INTO bookmark_folders (bookmark_id, folder_id) VALUES (?, ?)',
+        existing.id,
+        input.folderId,
+      );
+    }
+    return { id: existing.id, duplicate: true as const };
+  }
 
   const title = input.title?.trim() || domainFromUrl(normalizedUrl);
   const sourceKey = sourceFromUrl(normalizedUrl);
@@ -210,6 +239,11 @@ export async function addBookmark(
     title,
     input.folderId ?? 1,
     sourceKey,
+  );
+  await db.runAsync(
+    'INSERT OR IGNORE INTO bookmark_folders (bookmark_id, folder_id) VALUES (?, ?)',
+    result.lastInsertRowId,
+    input.folderId ?? 1,
   );
   return { id: result.lastInsertRowId, duplicate: false as const };
 }
@@ -262,11 +296,64 @@ export async function updateBookmarkTitle(db: SQLiteDatabase, id: number, title:
 }
 
 export async function moveBookmark(db: SQLiteDatabase, id: number, folderId: number) {
-  await db.runAsync(
-    'UPDATE bookmarks SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-    folderId,
-    id,
-  );
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      'UPDATE bookmarks SET folder_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      folderId,
+      id,
+    );
+    await db.runAsync('DELETE FROM bookmark_folders WHERE bookmark_id = ?', id);
+    await db.runAsync(
+      'INSERT INTO bookmark_folders (bookmark_id, folder_id) VALUES (?, ?)',
+      id,
+      folderId,
+    );
+  });
+}
+
+async function insertBookmarkFolders(db: SQLiteDatabase, ids: number[], folderIds: number[]) {
+  for (const bookmarkId of ids) {
+    for (const folderId of folderIds) {
+      await db.runAsync(
+        'INSERT OR IGNORE INTO bookmark_folders (bookmark_id, folder_id) VALUES (?, ?)',
+        bookmarkId,
+        folderId,
+      );
+    }
+  }
+}
+
+export async function copyBookmarksToFolders(db: SQLiteDatabase, ids: number[], folderIds: number[]) {
+  if (ids.length === 0 || folderIds.length === 0) return;
+  await db.withTransactionAsync(async () => {
+    await insertBookmarkFolders(db, ids, folderIds);
+  });
+}
+
+export async function moveBookmarksToFolders(
+  db: SQLiteDatabase,
+  ids: number[],
+  sourceFolderId: number,
+  destinationFolderIds: number[],
+) {
+  if (ids.length === 0 || destinationFolderIds.length === 0) return;
+  const placeholders = ids.map(() => '?').join(', ');
+  const nextPrimaryFolderId = destinationFolderIds[0];
+
+  await db.withTransactionAsync(async () => {
+    await insertBookmarkFolders(db, ids, destinationFolderIds);
+    await db.runAsync(
+      `DELETE FROM bookmark_folders
+       WHERE folder_id = ? AND bookmark_id IN (${placeholders})`,
+      [sourceFolderId, ...ids],
+    );
+    await db.runAsync(
+      `UPDATE bookmarks
+       SET folder_id = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE folder_id = ? AND id IN (${placeholders})`,
+      [nextPrimaryFolderId, sourceFolderId, ...ids],
+    );
+  });
 }
 
 export async function setFavorite(db: SQLiteDatabase, id: number, favorite: boolean) {
@@ -282,6 +369,17 @@ export async function setBookmarkStatus(db: SQLiteDatabase, id: number, status: 
     'UPDATE bookmarks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
     status,
     id,
+  );
+}
+
+export async function setBookmarksStatus(db: SQLiteDatabase, ids: number[], status: BookmarkStatus) {
+  if (ids.length === 0) return;
+  const placeholders = ids.map(() => '?').join(', ');
+  await db.runAsync(
+    `UPDATE bookmarks
+     SET status = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id IN (${placeholders})`,
+    [status, ...ids],
   );
 }
 

@@ -2,11 +2,27 @@ import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { SourceIcon } from '@/components/source-icon';
 import { useTheme } from '@/hooks/use-theme';
 import { SOURCE_APPS, type Bookmark } from '@/lib/bookmarks';
 import { readableTextColor } from '@/lib/color';
+import { getSocialPostText, isSocialPostSource } from '@/lib/social-content';
 
-export function BookmarkCard({ bookmark, onPress }: { bookmark: Bookmark; onPress: () => void }) {
+type BookmarkCardProps = {
+  bookmark: Bookmark;
+  onPress: () => void;
+  onLongPress?: () => void;
+  selected?: boolean;
+  selectionMode?: boolean;
+};
+
+export function BookmarkCard({
+  bookmark,
+  onPress,
+  onLongPress,
+  selected = false,
+  selectionMode = false,
+}: BookmarkCardProps) {
   const theme = useTheme();
   const [previewFailed, setPreviewFailed] = useState(false);
   const source = SOURCE_APPS[bookmark.source_key] ?? SOURCE_APPS.other;
@@ -20,19 +36,27 @@ export function BookmarkCard({ bookmark, onPress }: { bookmark: Bookmark; onPres
   })();
 
   const hasPreview = Boolean(bookmark.image_url && !previewFailed);
+  const isSocialPost = isSocialPostSource(bookmark.source_key);
+  let displayTitle = bookmark.title;
+  if (isSocialPostSource(bookmark.source_key)) {
+    displayTitle = getSocialPostText(bookmark.source_key, bookmark.title, bookmark.description);
+  }
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`Open ${bookmark.title}`}
+      accessibilityLabel={selectionMode ? `${selected ? 'Deselect' : 'Select'} ${displayTitle}` : `Open ${displayTitle}`}
+      accessibilityState={{ selected }}
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={350}
       style={({ pressed }) => [
         styles.card,
         {
           backgroundColor: theme.backgroundElement,
-          borderColor: theme.border,
+          borderColor: selected ? theme.pink : theme.border,
           shadowColor: theme.shadow,
-          boxShadow: `${pressed ? 2 : 7}px ${pressed ? 2 : 7}px 0px ${theme.shadow}`,
+          boxShadow: `${pressed ? 2 : 7}px ${pressed ? 2 : 7}px 0px ${selected ? theme.pink : theme.shadow}`,
           shadowOffset: { width: pressed ? 2 : 7, height: pressed ? 2 : 7 },
           elevation: pressed ? 2 : 7,
           transform: [
@@ -66,23 +90,40 @@ export function BookmarkCard({ bookmark, onPress }: { bookmark: Bookmark; onPres
               <Text style={styles.favorite}>★</Text>
             </View>
           ) : null}
+
+          {selectionMode ? (
+            <View
+              style={[
+                styles.selectionBadge,
+                {
+                  backgroundColor: selected ? theme.pink : theme.backgroundElement,
+                  borderColor: theme.border,
+                },
+              ]}>
+              <Text style={[styles.selectionMark, { color: selected ? '#111111' : theme.text }]}>
+                {selected ? '✓' : ''}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.body}>
           <View style={styles.sourceRow}>
-            <View style={[styles.sourceDot, { backgroundColor: source.color, borderColor: theme.border }]} />
+            <SourceIcon sourceKey={bookmark.source_key} />
             <Text style={[styles.source, { color: theme.textSecondary }]} numberOfLines={1}>
               {source.label}
             </Text>
           </View>
 
           <Text style={[styles.title, { color: theme.text }]} numberOfLines={3}>
-            {bookmark.title}
+            {displayTitle}
           </Text>
 
-          <Text style={[styles.domain, { color: theme.textSecondary }]} numberOfLines={1}>
-            {domain}
-          </Text>
+          {!isSocialPost && bookmark.source_key === 'other' ? (
+            <Text style={[styles.domain, { color: theme.textSecondary }]} numberOfLines={1}>
+              {domain}
+            </Text>
+          ) : null}
 
           <View style={styles.footer}>
             <View style={[styles.folder, { backgroundColor: bookmark.folder_color }]}>
@@ -137,9 +178,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.92)',
   },
   favorite: { color: '#FF4F88', fontSize: 17, lineHeight: 20 },
+  selectionBadge: {
+    position: 'absolute',
+    top: 9,
+    left: 9,
+    width: 30,
+    height: 30,
+    borderWidth: 3,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectionMark: { fontSize: 18, lineHeight: 20, fontWeight: '900' },
   body: { minHeight: 150, padding: 12, gap: 6 },
   sourceRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  sourceDot: { width: 7, height: 7, borderRadius: 4, borderWidth: 0.5 },
   source: { flex: 1, fontSize: 10, lineHeight: 13, fontWeight: '700' },
   title: { minHeight: 38, fontSize: 14, lineHeight: 18, fontWeight: '800', letterSpacing: -0.2 },
   domain: { fontSize: 10, lineHeight: 13, fontWeight: '600' },

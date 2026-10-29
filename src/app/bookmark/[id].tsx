@@ -24,6 +24,7 @@ import {
 } from '@/lib/bookmarks';
 import { goBackOrLibrary } from '@/lib/navigation';
 import { readableTextColor } from '@/lib/color';
+import { decodeTextEntities, getSocialPostText, isSocialPostSource } from '@/lib/social-content';
 import { useGlobalLoading } from '@/providers/global-loading';
 
 export default function BookmarkDetailScreen() {
@@ -43,13 +44,15 @@ export default function BookmarkDetailScreen() {
   const copyResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(async () => {
-    await runWithLoader(async () => {
-      const [row, folderRows] = await Promise.all([getBookmark(db, bookmarkId), getFolders(db)]);
-      setBookmark(row);
-      setTitle(row?.title ?? '');
-      setFolders(folderRows);
-    }, 'Loading bookmark…');
-  }, [bookmarkId, db, runWithLoader]);
+    const [row, folderRows] = await Promise.all([getBookmark(db, bookmarkId), getFolders(db)]);
+    setBookmark(row);
+    setTitle(
+      row && isSocialPostSource(row.source_key)
+        ? getSocialPostText(row.source_key, row.title, row.description)
+        : (row?.title ?? ''),
+    );
+    setFolders(folderRows);
+  }, [bookmarkId, db]);
 
   useFocusEffect(
     useCallback(() => {
@@ -69,6 +72,17 @@ export default function BookmarkDetailScreen() {
   if (!bookmark) {
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} />;
   }
+
+  const displayTitle = isSocialPostSource(bookmark.source_key)
+    ? getSocialPostText(bookmark.source_key, bookmark.title, bookmark.description)
+    : bookmark.title;
+  const displayDescription = bookmark.description
+    ? isSocialPostSource(bookmark.source_key)
+      ? getSocialPostText(bookmark.source_key, bookmark.title, bookmark.description)
+      : decodeTextEntities(bookmark.description)
+    : null;
+  const hasDuplicateSocialText =
+    isSocialPostSource(bookmark.source_key) && displayDescription === displayTitle;
 
   const openLink = async () => {
     await markOpened(db, bookmark.id);
@@ -115,9 +129,9 @@ export default function BookmarkDetailScreen() {
   };
 
   const copyDescription = async () => {
-    if (!bookmark.description) return;
+    if (!displayDescription) return;
     try {
-      await Clipboard.setStringAsync(bookmark.description);
+      await Clipboard.setStringAsync(displayDescription);
       setDescriptionCopied(true);
       if (copyResetTimer.current) clearTimeout(copyResetTimer.current);
       copyResetTimer.current = setTimeout(() => setDescriptionCopied(false), 1_600);
@@ -193,7 +207,7 @@ export default function BookmarkDetailScreen() {
         {bookmark.image_url && !previewFailed ? (
           <Pressable
             accessibilityRole="link"
-            accessibilityLabel={`Open ${bookmark.title}`}
+            accessibilityLabel={`Open ${displayTitle}`}
             onPress={() => void openLink()}
             style={({ pressed }) => [styles.previewPressable, pressed && styles.previewPressed]}>
             <Image
@@ -210,46 +224,50 @@ export default function BookmarkDetailScreen() {
               contentFit="cover"
               transition={180}
               cachePolicy="memory-disk"
-              accessibilityLabel={`Preview image for ${bookmark.title}`}
+              accessibilityLabel={`Preview image for ${displayTitle}`}
               onError={() => setPreviewFailed(true)}
             />
           </Pressable>
         ) : null}
 
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel={`Open ${bookmark.title}`}
-          onPress={() => void openLink()}
-          style={({ pressed }) => [styles.previewPressable, pressed && styles.previewPressed]}>
-          <BrutalCard backgroundColor={bookmark.folder_color} style={styles.hero}>
-            <Text style={styles.heroTitle}>{bookmark.title}</Text>
-          </BrutalCard>
-        </Pressable>
+        {!hasDuplicateSocialText ? (
+          <>
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={`Open ${displayTitle}`}
+              onPress={() => void openLink()}
+              style={({ pressed }) => [styles.previewPressable, pressed && styles.previewPressed]}>
+              <BrutalCard backgroundColor={bookmark.folder_color} style={styles.hero}>
+                <Text style={styles.heroTitle}>{displayTitle}</Text>
+              </BrutalCard>
+            </Pressable>
 
-        <View style={styles.field}>
-          <Text style={[styles.label, { color: theme.text }]}>TITLE</Text>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            style={[
-              styles.input,
-              {
-                color: theme.text,
-                backgroundColor: theme.backgroundElement,
-                borderColor: theme.border,
-                shadowColor: theme.shadow,
-                boxShadow: `5px 5px 0px ${theme.shadow}`,
-              },
-            ]}
-          />
-          {title.trim() !== bookmark.title ? (
-            <BrutalButton compact loading={savingTitle} onPress={() => void saveTitle()}>
-              SAVE TITLE
-            </BrutalButton>
-          ) : null}
-        </View>
+            <View style={styles.field}>
+              <Text style={[styles.label, { color: theme.text }]}>TITLE</Text>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                style={[
+                  styles.input,
+                  {
+                    color: theme.text,
+                    backgroundColor: theme.backgroundElement,
+                    borderColor: theme.border,
+                    shadowColor: theme.shadow,
+                    boxShadow: `5px 5px 0px ${theme.shadow}`,
+                  },
+                ]}
+              />
+              {title.trim() !== displayTitle ? (
+                <BrutalButton compact loading={savingTitle} onPress={() => void saveTitle()}>
+                  SAVE TITLE
+                </BrutalButton>
+              ) : null}
+            </View>
+          </>
+        ) : null}
 
-        {bookmark.description ? (
+        {displayDescription ? (
           <BrutalCard style={styles.descriptionCard}>
             <View style={styles.descriptionHeader}>
               <Text style={[styles.label, { color: theme.text }]}>DESCRIPTION</Text>
@@ -281,7 +299,7 @@ export default function BookmarkDetailScreen() {
                 />
               </Pressable>
             </View>
-            <Text style={[styles.description, { color: theme.textSecondary }]}>{bookmark.description}</Text>
+            <Text style={[styles.description, { color: theme.textSecondary }]}>{displayDescription}</Text>
           </BrutalCard>
         ) : null}
 

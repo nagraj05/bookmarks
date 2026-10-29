@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -17,12 +17,16 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalButton, BrutalCard, ScreenHeader } from '@/components/brutal';
+import { SourceIcon } from '@/components/source-icon';
 import { useTheme } from '@/hooks/use-theme';
+import { getAppFoldersEnabled } from '@/lib/app-settings';
 import { useGlobalLoading } from '@/providers/global-loading';
 import {
+  type BookmarkSource,
   createFolder,
   deleteFolder,
   type Folder,
+  getBookmarkSources,
   getFolders,
   renameFolder,
   updateFolderColor,
@@ -90,6 +94,8 @@ export default function FoldersScreen() {
   const theme = useTheme();
   const { runWithLoader } = useGlobalLoading();
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [appFolders, setAppFolders] = useState<BookmarkSource[]>([]);
+  const [appFoldersEnabled, setAppFoldersEnabled] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [color, setColor] = useState(folderColors[1]);
@@ -98,24 +104,15 @@ export default function FoldersScreen() {
   const [editName, setEditName] = useState('');
   const longPressedFolderId = useRef<number | null>(null);
 
-  const load = useCallback(
-    async () =>
-      runWithLoader(async () => {
-        setFolders(await getFolders(db));
-      }, 'Loading folders…'),
-    [db, runWithLoader],
-  );
-
-  useEffect(() => {
-    let active = true;
-
-    void getFolders(db).then((nextFolders) => {
-      if (active) setFolders(nextFolders);
-    });
-
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async () => {
+    const [nextFolders, nextAppFolders, enabled] = await Promise.all([
+      getFolders(db),
+      getBookmarkSources(db, 'active'),
+      getAppFoldersEnabled(db),
+    ]);
+    setFolders(nextFolders);
+    setAppFolders(nextAppFolders.filter((source) => source.key !== 'other'));
+    setAppFoldersEnabled(enabled);
   }, [db]);
 
   useFocusEffect(
@@ -230,6 +227,39 @@ export default function FoldersScreen() {
               CREATE FOLDER
             </BrutalButton>
           </BrutalCard>
+        ) : null}
+
+        {appFoldersEnabled && appFolders.length > 0 ? (
+          <View style={styles.folderSection}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>APP FOLDERS</Text>
+            <View style={styles.grid}>
+              {appFolders.map((source) => (
+                <Pressable
+                  key={source.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${source.label} app folder`}
+                  onPress={() =>
+                    router.push({ pathname: '/source/[key]', params: { key: source.key } })
+                  }
+                  style={({ pressed }) => [styles.folderPressable, pressed && styles.pressed]}>
+                  <BrutalCard backgroundColor={theme.backgroundElement} style={styles.appFolderCard}>
+                    <View style={[styles.appIconShell, { borderColor: theme.border, backgroundColor: '#FFFFFF' }]}>
+                      <SourceIcon sourceKey={source.key} size={42} />
+                    </View>
+                    <View style={styles.appFolderCopy}>
+                      <Text style={[styles.appFolderName, { color: theme.text }]} numberOfLines={1}>
+                        {source.label}
+                      </Text>
+                    </View>
+                  </BrutalCard>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {appFoldersEnabled ? (
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>YOUR FOLDERS</Text>
         ) : null}
 
         <View style={styles.grid}>
@@ -477,11 +507,24 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   selectedColor: { borderWidth: 5 },
+  folderSection: { gap: 13 },
+  sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   folderPressable: { width: '47%' },
   pressed: { transform: [{ translateX: 4 }, { translateY: 4 }] },
   folderCard: { minHeight: 132, padding: 16, justifyContent: 'center' },
   folderName: { fontSize: 20, lineHeight: 23, fontWeight: '900' },
+  appFolderCard: { minHeight: 132, padding: 14, gap: 10, justifyContent: 'space-between' },
+  appIconShell: {
+    width: 54,
+    height: 54,
+    borderWidth: 3,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appFolderCopy: { gap: 2 },
+  appFolderName: { fontSize: 18, lineHeight: 22, fontWeight: '900' },
   modalRoot: { flex: 1, justifyContent: 'center' },
   backdrop: {
     position: 'absolute',
