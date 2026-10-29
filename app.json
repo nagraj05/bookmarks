@@ -36,6 +36,12 @@
       ],
       "expo-sqlite",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Bookmarks to use Face ID to unlock your saved links."
+        }
+      ],
+      [
         "expo-sharing",
         {
           "ios": {

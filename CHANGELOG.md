@@ -9,6 +9,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Automated Android APK builds and GitHub releases for pushed `v*` tags
+- Optional app lock using biometric or device authentication
+- App-wide neobrutalist loading feedback for database operations and link metadata fetching
+- Substack source detection and filtering
+- One-tap description copying from bookmark details
+
+### Changed
+
+- Replaced the system permanent-delete alert with a centered neobrutalist confirmation modal
+- App Lock now activates only after Android turns the screen off, not during ordinary app switching
+- Android shares now save directly to Inbox and return to the source app instead of opening bookmark details
+- Replaced Archive and Move to Trash text actions with accessible icons
+
+### Fixed
+
+- Detail and folder back buttons now return safely to Library when no navigation history exists
+- Threads links using the current `threads.com` domain are classified correctly
+- Dark buttons, source filters, and folder badges now choose readable contrasting text automatically
 
 ## [1.0.0] - 2026-10-29
 

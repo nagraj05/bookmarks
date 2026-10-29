@@ -7,11 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrutalButton, BrutalCard } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
 import { addBookmark, type Folder, getFolders, updateBookmarkMetadata } from '@/lib/bookmarks';
+import { readableTextColor } from '@/lib/color';
 import { fetchLinkMetadata } from '@/lib/metadata';
+import { useGlobalLoading } from '@/providers/global-loading';
 
 export default function AddBookmarkScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
+  const { runWithLoader } = useGlobalLoading();
   const [url, setUrl] = useState('');
   const [title, setTitle] = useState('');
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -19,22 +22,30 @@ export default function AddBookmarkScreen() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    void getFolders(db).then(setFolders);
-  }, [db]);
+    void runWithLoader(async () => {
+      setFolders(await getFolders(db));
+    }, 'Loading folders…');
+  }, [db, runWithLoader]);
 
   const save = async () => {
     setSaving(true);
     try {
-      const result = await addBookmark(db, { url, title, folderId });
-      if (!result.duplicate) {
-        void fetchLinkMetadata(url).then((metadata) => updateBookmarkMetadata(db, result.id, metadata));
-      }
-      router.replace({
-        pathname: '/bookmark/[id]',
-        params: { id: String(result.id), duplicate: result.duplicate ? '1' : '0' },
-      });
+      await runWithLoader(async () => {
+        const result = await addBookmark(db, { url, title, folderId });
+        if (!result.duplicate) {
+          void runWithLoader(async () => {
+            const metadata = await fetchLinkMetadata(url);
+            await updateBookmarkMetadata(db, result.id, metadata);
+          }, 'Fetching link preview…');
+        }
+        router.replace({
+          pathname: '/bookmark/[id]',
+          params: { id: String(result.id), duplicate: result.duplicate ? '1' : '0' },
+        });
+      }, 'Saving bookmark…');
     } catch (error) {
       Alert.alert('Invalid link', error instanceof Error ? error.message : 'Check the URL and try again.');
+    } finally {
       setSaving(false);
     }
   };
@@ -127,7 +138,7 @@ export default function AddBookmarkScreen() {
                   },
                   folderId === folder.id && styles.folderSelected,
                 ]}>
-                <Text style={styles.folderText}>{folder.name}</Text>
+                <Text style={[styles.folderText, { color: readableTextColor(folder.color) }]}>{folder.name}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -189,5 +200,5 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   folderSelected: { borderWidth: 4, paddingHorizontal: 12, paddingVertical: 7 },
-  folderText: { color: '#111111', fontSize: 12, fontWeight: '900' },
+  folderText: { fontSize: 12, fontWeight: '900' },
 });

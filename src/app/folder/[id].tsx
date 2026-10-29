@@ -8,24 +8,29 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BookmarkCard } from '@/components/bookmark-card';
 import { EmptyState } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
+import { goBackOrLibrary } from '@/lib/navigation';
 import { type Bookmark, type Folder, getFolders, listBookmarks } from '@/lib/bookmarks';
+import { useGlobalLoading } from '@/providers/global-loading';
 
 export default function FolderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const db = useSQLiteContext();
   const theme = useTheme();
+  const { runWithLoader } = useGlobalLoading();
   const folderId = Number(id);
   const [folder, setFolder] = useState<Folder | null>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
 
   const load = useCallback(async () => {
-    const [folders, rows] = await Promise.all([
-      getFolders(db),
-      listBookmarks(db, { folderId, status: 'active' }),
-    ]);
-    setFolder(folders.find((item) => item.id === folderId) ?? null);
-    setBookmarks(rows);
-  }, [db, folderId]);
+    await runWithLoader(async () => {
+      const [folders, rows] = await Promise.all([
+        getFolders(db),
+        listBookmarks(db, { folderId, status: 'active' }),
+      ]);
+      setFolder(folders.find((item) => item.id === folderId) ?? null);
+      setBookmarks(rows);
+    }, 'Loading folder…');
+  }, [db, folderId, runWithLoader]);
 
   useFocusEffect(
     useCallback(() => {
@@ -40,7 +45,7 @@ export default function FolderScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Go back"
-            onPress={() => router.back()}
+            onPress={goBackOrLibrary}
             style={({ pressed }) => [
               styles.back,
               {

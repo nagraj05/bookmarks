@@ -73,7 +73,41 @@ export async function migrateDatabase(db: SQLiteDatabase) {
         value TEXT NOT NULL
       );
       INSERT OR IGNORE INTO app_settings (key, value) VALUES ('theme', 'system');
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app_lock_enabled', 'false');
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app_lock_pending', 'false');
       PRAGMA user_version = 3;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 4) {
+    await db.execAsync(`
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app_lock_enabled', 'false');
+      PRAGMA user_version = 4;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 5) {
+    await db.execAsync(`
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('app_lock_pending', 'false');
+      PRAGMA user_version = 5;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 6) {
+    await db.execAsync(`
+      UPDATE bookmarks
+      SET source_key = 'threads'
+      WHERE normalized_url LIKE '%://threads.com/%'
+         OR normalized_url LIKE '%://%.threads.com/%'
+         OR normalized_url LIKE '%://threads.net/%'
+         OR normalized_url LIKE '%://%.threads.net/%';
+
+      UPDATE bookmarks
+      SET source_key = 'substack'
+      WHERE normalized_url LIKE '%://substack.com/%'
+         OR normalized_url LIKE '%://%.substack.com/%';
+
+      PRAGMA user_version = 6;
     `);
   }
 }

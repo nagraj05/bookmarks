@@ -11,6 +11,7 @@ import {
 
 import { Brutal } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { readableTextColor } from '@/lib/color';
 
 type ButtonProps = PropsWithChildren<{
   onPress: () => void;
@@ -33,6 +34,8 @@ export function BrutalButton({
   textStyle,
 }: ButtonProps) {
   const theme = useTheme();
+  const resolvedBackgroundColor = backgroundColor ?? theme.yellow;
+  const foregroundColor = readableTextColor(resolvedBackgroundColor);
   return (
     <Pressable
       accessibilityRole="button"
@@ -41,7 +44,7 @@ export function BrutalButton({
       style={({ pressed }) => [
         styles.button,
         {
-          backgroundColor: backgroundColor ?? theme.yellow,
+          backgroundColor: resolvedBackgroundColor,
           borderColor: theme.border,
           shadowColor: theme.shadow,
           boxShadow: `${pressed ? 1 : compact ? 4 : Brutal.shadowOffset}px ${pressed ? 1 : compact ? 4 : Brutal.shadowOffset}px 0px ${theme.shadow}`,
@@ -52,9 +55,9 @@ export function BrutalButton({
         style,
       ]}>
       {loading ? (
-        <ActivityIndicator color="#111111" />
+        <ActivityIndicator color={foregroundColor} />
       ) : (
-        <Text style={[styles.buttonText, textStyle]}>{children}</Text>
+        <Text style={[styles.buttonText, { color: foregroundColor }, textStyle]}>{children}</Text>
       )}
     </Pressable>
   );
@@ -136,7 +139,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#111111',
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.3,

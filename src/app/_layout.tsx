@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { DATABASE_NAME, migrateDatabase } from '@/lib/database';
+import { AppLockProvider } from '@/providers/app-lock';
+import { GlobalLoadingProvider } from '@/providers/global-loading';
 import { ThemePreferenceProvider, useThemePreference } from '@/providers/theme-preference';
 
 function AppNavigation() {
@@ -28,7 +30,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <SQLiteProvider databaseName={DATABASE_NAME} onInit={migrateDatabase}>
         <ThemePreferenceProvider>
-          <AppNavigation />
+          <AppLockProvider>
+            <GlobalLoadingProvider>
+              <AppNavigation />
+            </GlobalLoadingProvider>
+          </AppLockProvider>
         </ThemePreferenceProvider>
       </SQLiteProvider>
     </SafeAreaProvider>

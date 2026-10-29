@@ -18,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalButton, BrutalCard, ScreenHeader } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
+import { useGlobalLoading } from '@/providers/global-loading';
 import {
   createFolder,
   deleteFolder,
@@ -26,6 +27,7 @@ import {
   renameFolder,
   updateFolderColor,
 } from '@/lib/bookmarks';
+import { readableTextColor } from '@/lib/color';
 
 const folderColors = ['#FFD23F', '#FF6B9E', '#63D7FF', '#8BE28B', '#B59CFF', '#FF8A5B'];
 
@@ -86,6 +88,7 @@ function FolderActionIconButton({
 export default function FoldersScreen() {
   const db = useSQLiteContext();
   const theme = useTheme();
+  const { runWithLoader } = useGlobalLoading();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
@@ -95,7 +98,13 @@ export default function FoldersScreen() {
   const [editName, setEditName] = useState('');
   const longPressedFolderId = useRef<number | null>(null);
 
-  const load = useCallback(async () => setFolders(await getFolders(db)), [db]);
+  const load = useCallback(
+    async () =>
+      runWithLoader(async () => {
+        setFolders(await getFolders(db));
+      }, 'Loading folders…'),
+    [db, runWithLoader],
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -105,10 +114,12 @@ export default function FoldersScreen() {
 
   const saveFolder = async () => {
     try {
-      await createFolder(db, name, color);
-      setName('');
-      setCreating(false);
-      await load();
+      await runWithLoader(async () => {
+        await createFolder(db, name, color);
+        setName('');
+        setCreating(false);
+        await load();
+      }, 'Creating folder…');
     } catch (error) {
       Alert.alert('Could not create folder', error instanceof Error ? error.message : 'Try another name.');
     }
@@ -128,9 +139,11 @@ export default function FoldersScreen() {
   const saveFolderName = async () => {
     if (!selectedFolder) return;
     try {
-      await renameFolder(db, selectedFolder.id, editName);
-      await load();
-      closeFolderActions();
+      await runWithLoader(async () => {
+        await renameFolder(db, selectedFolder.id, editName);
+        await load();
+        closeFolderActions();
+      }, 'Renaming folder…');
     } catch (error) {
       Alert.alert('Could not rename folder', error instanceof Error ? error.message : 'Try another name.');
     }
@@ -138,17 +151,21 @@ export default function FoldersScreen() {
 
   const saveFolderColor = async (nextColor: string) => {
     if (!selectedFolder) return;
-    await updateFolderColor(db, selectedFolder.id, nextColor);
-    await load();
-    closeFolderActions();
+    await runWithLoader(async () => {
+      await updateFolderColor(db, selectedFolder.id, nextColor);
+      await load();
+      closeFolderActions();
+    }, 'Updating folder…');
   };
 
   const removeSelectedFolder = async () => {
     if (!selectedFolder || selectedFolder.id === 1) return;
     try {
-      await deleteFolder(db, selectedFolder.id);
-      await load();
-      closeFolderActions();
+      await runWithLoader(async () => {
+        await deleteFolder(db, selectedFolder.id);
+        await load();
+        closeFolderActions();
+      }, 'Deleting folder…');
     } catch (error) {
       Alert.alert('Could not delete folder', error instanceof Error ? error.message : 'Try again.');
     }
@@ -221,7 +238,11 @@ export default function FoldersScreen() {
               delayLongPress={350}
               style={({ pressed }) => [styles.folderPressable, pressed && styles.pressed]}>
               <BrutalCard backgroundColor={folder.color} style={styles.folderCard}>
-                <Text style={styles.folderName} numberOfLines={2}>{folder.name}</Text>
+                <Text
+                  style={[styles.folderName, { color: readableTextColor(folder.color) }]}
+                  numberOfLines={2}>
+                  {folder.name}
+                </Text>
               </BrutalCard>
             </Pressable>
           ))}
@@ -448,7 +469,7 @@ const styles = StyleSheet.create({
   folderPressable: { width: '47%' },
   pressed: { transform: [{ translateX: 4 }, { translateY: 4 }] },
   folderCard: { minHeight: 132, padding: 16, justifyContent: 'center' },
-  folderName: { color: '#111111', fontSize: 20, lineHeight: 23, fontWeight: '900' },
+  folderName: { fontSize: 20, lineHeight: 23, fontWeight: '900' },
   modalRoot: { flex: 1, justifyContent: 'center' },
   backdrop: {
     position: 'absolute',

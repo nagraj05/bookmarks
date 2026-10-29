@@ -11,6 +11,7 @@ export const SOURCE_APPS = {
   linkedin: { label: 'LinkedIn', color: '#63D7FF' },
   tiktok: { label: 'TikTok', color: '#B59CFF' },
   threads: { label: 'Threads', color: '#C9C2D0' },
+  substack: { label: 'Substack', color: '#FF6719' },
   pinterest: { label: 'Pinterest', color: '#FF7070' },
   other: { label: 'Other', color: '#8BE28B' },
 } as const;
@@ -92,7 +93,13 @@ export function sourceFromUrl(url: string): SourceKey {
   if (domain === 'reddit.com' || domain.endsWith('.reddit.com') || domain === 'redd.it') return 'reddit';
   if (domain === 'linkedin.com' || domain.endsWith('.linkedin.com') || domain === 'lnkd.in') return 'linkedin';
   if (domain === 'tiktok.com' || domain.endsWith('.tiktok.com')) return 'tiktok';
-  if (domain === 'threads.net' || domain.endsWith('.threads.net')) return 'threads';
+  if (
+    domain === 'threads.net' ||
+    domain.endsWith('.threads.net') ||
+    domain === 'threads.com' ||
+    domain.endsWith('.threads.com')
+  ) return 'threads';
+  if (domain === 'substack.com' || domain.endsWith('.substack.com')) return 'substack';
   if (domain === 'pinterest.com' || domain.endsWith('.pinterest.com') || domain === 'pin.it') return 'pinterest';
   return 'other';
 }

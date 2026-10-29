@@ -1,9 +1,10 @@
 import { SymbolView } from 'expo-symbols';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalCard, ScreenHeader } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppLock } from '@/providers/app-lock';
 import { type ThemePreference, useThemePreference } from '@/providers/theme-preference';
 
 const themeOptions = [
@@ -31,6 +32,24 @@ const themeOptions = [
 export default function SettingsScreen() {
   const theme = useTheme();
   const { preference, setPreference } = useThemePreference();
+  const { enabled: appLockEnabled, authenticating, enableLock, disableLock } = useAppLock();
+
+  const toggleAppLock = async () => {
+    if (appLockEnabled) {
+      await disableLock();
+      return;
+    }
+
+    const result = await enableLock();
+    if (result.success || result.reason === 'cancelled') return;
+
+    Alert.alert(
+      result.reason === 'not-enrolled' ? 'Set up a device lock first' : 'App lock unavailable',
+      result.reason === 'not-enrolled'
+        ? 'Add a fingerprint, face, PIN, pattern, or password in your phone settings, then try again.'
+        : 'App lock is available in the Android and iOS app.',
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
@@ -80,13 +99,57 @@ export default function SettingsScreen() {
             );
           })}
         </View>
+
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>PRIVACY</Text>
+        <BrutalCard backgroundColor={theme.pink} style={styles.appLockCard}>
+          <View style={[styles.appLockIconWrap, { borderColor: theme.border }]}>
+            <SymbolView
+              name={{
+                ios: appLockEnabled ? 'lock.fill' : 'lock.open.fill',
+                android: appLockEnabled ? 'lock' : 'lock_open',
+                web: appLockEnabled ? 'lock' : 'lock_open',
+              }}
+              tintColor="#111111"
+              size={25}
+              style={styles.appLockIcon}
+            />
+          </View>
+          <View style={styles.rowCopy}>
+            <Text style={styles.darkTitle}>App lock</Text>
+            <Text style={styles.darkBody}>Require device authentication when opening Bookmarks.</Text>
+          </View>
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityLabel="App lock"
+            accessibilityState={{ checked: appLockEnabled, disabled: authenticating }}
+            disabled={authenticating}
+            onPress={() => void toggleAppLock()}
+            style={[
+              styles.toggle,
+              {
+                backgroundColor: appLockEnabled ? theme.green : '#FFFFFF',
+                borderColor: theme.border,
+                opacity: authenticating ? 0.55 : 1,
+              },
+            ]}>
+            <View
+              style={[
+                styles.toggleThumb,
+                {
+                  backgroundColor: appLockEnabled ? '#111111' : '#7B7380',
+                  transform: [{ translateX: appLockEnabled ? 22 : 0 }],
+                },
+              ]}
+            />
+          </Pressable>
+        </BrutalCard>
+
         <Text style={[styles.sectionTitle, { color: theme.text }]}>COMING NEXT</Text>
         <View style={styles.stack}>
           {[
-            ['◈', 'Optional app lock', 'Biometric or device authentication.'],
             ['⇩', 'Backup & restore', 'Export a portable local backup file.'],
-          ].map(([icon, title, body], index) => (
-            <BrutalCard key={title} backgroundColor={index === 0 ? theme.pink : theme.blue} style={styles.rowCard}>
+          ].map(([icon, title, body]) => (
+            <BrutalCard key={title} backgroundColor={theme.blue} style={styles.rowCard}>
               <Text style={styles.itemIcon}>{icon}</Text>
               <View style={styles.rowCopy}>
                 <Text style={styles.darkTitle}>{title}</Text>
@@ -108,6 +171,26 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
   stack: { gap: 15 },
   rowCard: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 },
+  appLockCard: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  appLockIconWrap: {
+    width: 44,
+    height: 44,
+    borderWidth: 3,
+    borderRadius: 11,
+    backgroundColor: '#FFD23F',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appLockIcon: { width: 25, height: 25 },
+  toggle: {
+    width: 52,
+    height: 30,
+    borderWidth: 3,
+    borderRadius: 8,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  toggleThumb: { width: 18, height: 18, borderRadius: 4 },
   rowCopy: { flex: 1, gap: 3 },
   rowTitle: { fontSize: 16, fontWeight: '900' },
   rowBody: { fontSize: 12, lineHeight: 17, fontWeight: '600' },

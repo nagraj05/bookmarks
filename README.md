@@ -30,9 +30,11 @@ Bookmarks is designed for people who want a fast place to save links without cre
 - Rename, recolor, and delete folders with a long press
 - Move bookmarks between folders from the details screen
 - Fetch titles, descriptions, favicons, and preview images
-- Filter bookmarks by source app, including X, Instagram, Facebook, YouTube, Reddit, and more
+- Show consistent app-wide loading feedback during saves, searches, and metadata fetching
+- Filter bookmarks by source app, including X, Instagram, Facebook, Threads, Substack, YouTube, Reddit, and more
 - Search, favorite, archive, restore, trash, and permanently delete bookmarks
 - Open links in their associated app with a browser fallback
+- Optionally lock the app with fingerprint, face, or device authentication
 - Choose System, Light, or Dark appearance
 - Use the app completely offline after link metadata has been fetched
 

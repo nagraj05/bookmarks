@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
 import { SOURCE_APPS, type Bookmark } from '@/lib/bookmarks';
+import { readableTextColor } from '@/lib/color';
 
 export function BookmarkCard({ bookmark, onPress }: { bookmark: Bookmark; onPress: () => void }) {
   const theme = useTheme();
@@ -85,7 +86,11 @@ export function BookmarkCard({ bookmark, onPress }: { bookmark: Bookmark; onPres
 
           <View style={styles.footer}>
             <View style={[styles.folder, { backgroundColor: bookmark.folder_color }]}>
-              <Text style={styles.folderText} numberOfLines={1}>{bookmark.folder_name}</Text>
+              <Text
+                style={[styles.folderText, { color: readableTextColor(bookmark.folder_color) }]}
+                numberOfLines={1}>
+                {bookmark.folder_name}
+              </Text>
             </View>
           </View>
         </View>
@@ -140,5 +145,5 @@ const styles = StyleSheet.create({
   domain: { fontSize: 10, lineHeight: 13, fontWeight: '600' },
   footer: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center' },
   folder: { maxWidth: '78%', borderRadius: 999, paddingHorizontal: 8, paddingVertical: 4 },
-  folderText: { color: '#111111', fontSize: 9, lineHeight: 11, fontWeight: '800', textTransform: 'uppercase' },
+  folderText: { fontSize: 9, lineHeight: 11, fontWeight: '800', textTransform: 'uppercase' },
 });
