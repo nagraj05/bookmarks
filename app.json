@@ -1,27 +1,28 @@
 {
   "expo": {
-    "name": "bookmarks",
+    "name": "Bookmarks",
     "slug": "bookmarks",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/bookmarks-icon-v5.png",
     "scheme": "bookmarks",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/bookmarks-icon-v5.png",
+      "bundleIdentifier": "com.tadingi.bookmarks"
     },
     "android": {
+      "icon": "./assets/images/bookmarks-icon-v5.png",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFD400",
+        "foregroundImage": "./assets/images/bookmarks-icon-v5.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.tadingi.bookmarks"
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/bookmarks-icon-v5.png"
     },
     "plugins": [
       "expo-router",
@@ -32,11 +33,42 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      "expo-sqlite",
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "activationRule": {
+              "supportsText": true,
+              "supportsWebUrlWithMaxCount": 1,
+              "supportsWebPageWithMaxCount": 1
+            }
+          },
+          "android": {
+            "enabled": true,
+            "singleShareMimeTypes": [
+              "text/*"
+            ]
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "ae190101-8503-4737-8006-d07d6462a12d"
+      }
+    },
+    "owner": "tadingi"
   }
 }

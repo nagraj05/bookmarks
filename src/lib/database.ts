@@ -1,0 +1,79 @@
+import type { SQLiteDatabase } from 'expo-sqlite';
+
+export const DATABASE_NAME = 'bookmarks.db';
+
+export async function migrateDatabase(db: SQLiteDatabase) {
+  await db.execAsync('PRAGMA journal_mode = WAL');
+  await db.execAsync('PRAGMA foreign_keys = ON');
+
+  const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
+
+  if ((version?.user_version ?? 0) < 1) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS folders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL COLLATE NOCASE UNIQUE,
+        color TEXT NOT NULL DEFAULT '#FFD23F',
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS bookmarks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        url TEXT NOT NULL,
+        normalized_url TEXT NOT NULL UNIQUE,
+        title TEXT NOT NULL,
+        description TEXT,
+        image_url TEXT,
+        favicon_url TEXT,
+        folder_id INTEGER NOT NULL DEFAULT 1,
+        is_favorite INTEGER NOT NULL DEFAULT 0 CHECK (is_favorite IN (0, 1)),
+        status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived', 'trash')),
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        last_opened_at TEXT,
+        FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE RESTRICT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_bookmarks_folder ON bookmarks(folder_id);
+      CREATE INDEX IF NOT EXISTS idx_bookmarks_status ON bookmarks(status);
+      CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created_at DESC);
+
+      INSERT OR IGNORE INTO folders (id, name, color) VALUES (1, 'Inbox', '#FFD23F');
+      PRAGMA user_version = 1;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 2) {
+    await db.execAsync(`
+      ALTER TABLE bookmarks ADD COLUMN source_key TEXT NOT NULL DEFAULT 'other';
+
+      UPDATE bookmarks
+      SET source_key = CASE
+        WHEN normalized_url LIKE '%://x.com/%' OR normalized_url LIKE '%://twitter.com/%' THEN 'x'
+        WHEN normalized_url LIKE '%instagram.com/%' THEN 'instagram'
+        WHEN normalized_url LIKE '%facebook.com/%' OR normalized_url LIKE '%fb.watch/%' THEN 'facebook'
+        WHEN normalized_url LIKE '%youtube.com/%' OR normalized_url LIKE '%youtu.be/%' THEN 'youtube'
+        WHEN normalized_url LIKE '%reddit.com/%' OR normalized_url LIKE '%redd.it/%' THEN 'reddit'
+        WHEN normalized_url LIKE '%linkedin.com/%' OR normalized_url LIKE '%lnkd.in/%' THEN 'linkedin'
+        WHEN normalized_url LIKE '%tiktok.com/%' THEN 'tiktok'
+        WHEN normalized_url LIKE '%threads.net/%' THEN 'threads'
+        WHEN normalized_url LIKE '%pinterest.com/%' OR normalized_url LIKE '%pin.it/%' THEN 'pinterest'
+        ELSE 'other'
+      END;
+
+      CREATE INDEX IF NOT EXISTS idx_bookmarks_source ON bookmarks(source_key);
+      PRAGMA user_version = 2;
+    `);
+  }
+
+  if ((version?.user_version ?? 0) < 3) {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+      INSERT OR IGNORE INTO app_settings (key, value) VALUES ('theme', 'system');
+      PRAGMA user_version = 3;
+    `);
+  }
+}

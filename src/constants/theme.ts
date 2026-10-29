@@ -10,17 +10,33 @@ import { Platform } from 'react-native';
 export const Colors = {
   light: {
     text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    background: '#FFF8E8',
+    backgroundElement: '#FFFFFF',
+    backgroundSelected: '#FFD23F',
+    textSecondary: '#4B4652',
+    border: '#111111',
+    yellow: '#FFD23F',
+    pink: '#FF6B9E',
+    blue: '#63D7FF',
+    green: '#8BE28B',
+    purple: '#B59CFF',
+    danger: '#FF5C5C',
+    shadow: '#111111',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#FFFDF5',
+    background: '#17151D',
+    backgroundElement: '#25222E',
+    backgroundSelected: '#FFD23F',
+    textSecondary: '#C9C2D0',
+    border: '#F2EBDD',
+    yellow: '#FFD23F',
+    pink: '#FF6B9E',
+    blue: '#63D7FF',
+    green: '#8BE28B',
+    purple: '#B59CFF',
+    danger: '#FF7070',
+    shadow: '#F2EBDD',
   },
 } as const;
 
@@ -59,6 +75,12 @@ export const Spacing = {
   four: 24,
   five: 32,
   six: 64,
+} as const;
+
+export const Brutal = {
+  borderWidth: 3,
+  radius: 12,
+  shadowOffset: 7,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

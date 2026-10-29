@@ -1,0 +1,136 @@
+import { SymbolView } from 'expo-symbols';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { BrutalCard, ScreenHeader } from '@/components/brutal';
+import { useTheme } from '@/hooks/use-theme';
+import { type ThemePreference, useThemePreference } from '@/providers/theme-preference';
+
+const themeOptions = [
+  {
+    value: 'system',
+    label: 'System',
+    symbol: { ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' },
+  },
+  {
+    value: 'light',
+    label: 'Light',
+    symbol: { ios: 'sun.max.fill', android: 'light_mode', web: 'light_mode' },
+  },
+  {
+    value: 'dark',
+    label: 'Dark',
+    symbol: { ios: 'moon.fill', android: 'dark_mode', web: 'dark_mode' },
+  },
+] as const satisfies readonly {
+  value: ThemePreference;
+  label: string;
+  symbol: { ios: string; android: string; web: string };
+}[];
+
+export default function SettingsScreen() {
+  const theme = useTheme();
+  const { preference, setPreference } = useThemePreference();
+
+  return (
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <ScreenHeader title="Settings" />
+
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>APPEARANCE</Text>
+        <View style={styles.themeOptions}>
+          {themeOptions.map((option, index) => {
+            const selected = preference === option.value;
+            const colors = [theme.yellow, theme.blue, theme.purple];
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                onPress={() => void setPreference(option.value)}
+                style={[
+                  styles.themeOption,
+                  {
+                    backgroundColor: selected ? colors[index] : theme.backgroundElement,
+                    borderColor: theme.border,
+                    shadowColor: theme.shadow,
+                    boxShadow: `6px 6px 0px ${theme.shadow}`,
+                    transform: [
+                      { translateX: selected ? -2 : 0 },
+                      { translateY: selected ? -2 : 0 },
+                    ],
+                  },
+                ]}>
+                <SymbolView
+                  name={option.symbol}
+                  tintColor={selected ? '#111111' : theme.text}
+                  size={24}
+                  style={styles.themeIcon}
+                />
+                <Text style={[styles.themeLabel, { color: selected ? '#111111' : theme.text }]}>{option.label}</Text>
+                {selected ? (
+                  <SymbolView
+                    name={{ ios: 'checkmark', android: 'check', web: 'check' }}
+                    tintColor="#111111"
+                    size={15}
+                    style={styles.themeCheck}
+                  />
+                ) : null}
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>COMING NEXT</Text>
+        <View style={styles.stack}>
+          {[
+            ['◈', 'Optional app lock', 'Biometric or device authentication.'],
+            ['⇩', 'Backup & restore', 'Export a portable local backup file.'],
+          ].map(([icon, title, body], index) => (
+            <BrutalCard key={title} backgroundColor={index === 0 ? theme.pink : theme.blue} style={styles.rowCard}>
+              <Text style={styles.itemIcon}>{icon}</Text>
+              <View style={styles.rowCopy}>
+                <Text style={styles.darkTitle}>{title}</Text>
+                <Text style={styles.darkBody}>{body}</Text>
+              </View>
+            </BrutalCard>
+          ))}
+        </View>
+
+        <Text style={[styles.version, { color: theme.textSecondary }]}>BOOKMARKS · FIRST LOCAL BUILD</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
+  content: { padding: 18, paddingBottom: 40, gap: 20 },
+  sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
+  stack: { gap: 15 },
+  rowCard: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 },
+  rowCopy: { flex: 1, gap: 3 },
+  rowTitle: { fontSize: 16, fontWeight: '900' },
+  rowBody: { fontSize: 12, lineHeight: 17, fontWeight: '600' },
+  themeOptions: { flexDirection: 'row', gap: 10 },
+  themeOption: {
+    flex: 1,
+    minHeight: 92,
+    borderWidth: 3,
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+  },
+  themeIcon: { width: 24, height: 24 },
+  themeLabel: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
+  themeCheck: { position: 'absolute', top: 7, right: 8, width: 15, height: 15 },
+  itemIcon: { color: '#111111', fontSize: 28, fontWeight: '900' },
+  darkTitle: { color: '#111111', fontSize: 16, fontWeight: '900' },
+  darkBody: { color: '#111111', fontSize: 12, lineHeight: 17, fontWeight: '600' },
+  version: { textAlign: 'center', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginTop: 10 },
+});
