@@ -76,16 +76,31 @@ jobs:
             "${{ steps.eas-build.outputs.artifact_url }}"
           echo "ASSET_NAME=$asset_name" >> "$GITHUB_ENV"
 
+      - name: Prepare release notes
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME#v}"
+          awk -v version="$release_version" '
+            $0 ~ "^## \\[" version "\\]" { capture = 1; next }
+            capture && /^## \\[/ { exit }
+            capture { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "**Full changelog:** https://github.com/${GITHUB_REPOSITORY}/compare/$(git describe --tags --abbrev=0 HEAD^)...${GITHUB_REF_NAME}" > release-notes.md
+          fi
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.md
             gh release upload "$GITHUB_REF_NAME" "$ASSET_NAME" --clobber
           else
             gh release create "$GITHUB_REF_NAME" "$ASSET_NAME" \
               --verify-tag \
               --title "Bookmarks $GITHUB_REF_NAME" \
-              --generate-notes
+              --notes-file release-notes.md
           fi
