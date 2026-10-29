@@ -1,80 +1,132 @@
-<p align="center">
-  <img src="assets/images/bookmarks-icon-v5.png" width="120" alt="Bookmarks app icon" />
-</p>
+ <div align="center">
+  <img src="assets/images/bookmarks-icon-v5.png" alt="Bookmarks app icon" width="120" />
 
-<h1 align="center">Bookmarks</h1>
+  # Bookmarks
 
-<p align="center">
-  A colorful, local-first bookmark manager for Android and iOS.
-  Save links from any app, organize them into folders, and keep everything on your device.
-</p>
+  **Save links. Organize ideas. Keep everything in one place.**
 
-<p align="center">
-  <img alt="Expo SDK 58" src="https://img.shields.io/badge/Expo%20SDK-58-000000?style=flat-square&logo=expo" />
-  <img alt="React Native" src="https://img.shields.io/badge/React%20Native-0.88-61DAFB?style=flat-square&logo=react" />
-  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Android%20%7C%20iOS-FF6B9E?style=flat-square" />
-  <img alt="Storage" src="https://img.shields.io/badge/storage-local%20SQLite-8BE28B?style=flat-square" />
-</p>
+  [![Android Release](https://img.shields.io/badge/Android-Release-3DDC84?logo=android&logoColor=white)](../../actions)
+  ![Expo SDK 58](https://img.shields.io/badge/Expo-SDK%2058-000020?logo=expo&logoColor=white)
+  ![React Native](https://img.shields.io/badge/React%20Native-0.88-61DAFB?logo=react&logoColor=white)
+  ![Platforms](https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-FF6B9E)
+  ![Storage](https://img.shields.io/badge/Storage-Local%20SQLite-8BE28B)
 
-## Why Bookmarks?
+  [Download APK](../../releases/latest) · [Report a bug](../../issues/new)
+</div>
 
-Bookmarks is designed for people who want a fast place to save links without creating another cloud account. Share a link from another app and it lands directly in your Inbox. Organize it later, search it, favorite it, or move it into a flat folder structure.
+## About
+
+Bookmarks is a colorful, local-first bookmark manager for Android and iOS. Save links from apps like Instagram, X, Substack, Pinterest, YouTube, Reddit, and more. Organize everything into folders, find saved links quickly, and keep your collection on your device without creating another cloud account.
 
 ## Features
 
-- Save links from the standard Android and iOS share menus
-- Store all bookmarks and settings locally with SQLite
-- Send new shares directly to Inbox with no interruption
-- Prevent duplicate links from being saved
-- Organize bookmarks into simple, non-nested folders
-- Rename, recolor, and delete folders with a long press
-- Move bookmarks between folders from the details screen
-- Fetch titles, descriptions, favicons, and preview images
-- Show consistent app-wide loading feedback during saves, searches, and metadata fetching
-- Filter bookmarks by source app, including X, Instagram, Facebook, Threads, Substack, YouTube, Reddit, and more
-- Search, favorite, archive, restore, trash, and permanently delete bookmarks
-- Open links in their associated app with a browser fallback
-- Optionally lock the app with fingerprint, face, or device authentication
-- Choose System, Light, or Dark appearance
-- Use the app completely offline after link metadata has been fetched
+- Save links directly from the native Android and iOS share menus.
+- Send shared links straight to your Inbox without interrupting your workflow.
+- Store bookmarks, folders, and preferences locally using SQLite.
+- Prevent duplicate links from being saved.
+- Organize bookmarks into simple, non-nested folders.
+- Rename, recolor, and delete folders with a long press.
+- Move bookmarks between folders from the details screen.
+- Fetch page titles, descriptions, favicons, and preview images.
+- Filter bookmarks by source app, including X, Instagram, Facebook, Threads, Substack, YouTube, Reddit, and more.
+- Search, favorite, archive, restore, trash, and permanently delete bookmarks.
+- Open links in their associated apps, with a browser fallback.
+- Optionally lock the app using fingerprint, face, or device authentication.
+- Choose a light, dark, or system-matched theme.
+- Continue accessing saved bookmarks offline after link metadata has been fetched.
 
 ## Privacy
 
-Bookmarks has no account system and no cloud database. Bookmark records, folder information, and preferences remain in the app's local SQLite database on your device.
+Bookmarks is designed to keep your personal collection on your device.
 
-Uninstalling the app removes that local database. Backup and restore are planned but are not included in the first release.
+- No account or sign-in is required.
+- No cloud database is used for storing bookmark records.
+- Bookmark records, folders, and preferences are stored in the app's local SQLite database.
+- Link metadata is fetched when needed to provide previews.
+- Uninstalling the app removes its locally stored database.
+- Backup and restore are planned but are not included in the first release.
 
-## Getting started
+**Note:** Fetching link metadata requires network access. Offline access to previously saved content does not guarantee that external websites or linked media will remain available offline.
+
+> Bookmarks is an independent application and is not affiliated with, endorsed by, or connected to Instagram, Meta, X, Substack, Pinterest, or any other third-party platform.
+
+## Install the app
+
+1. Open the [latest GitHub release](../../releases/latest).
+2. Download the `Bookmarks-*.apk` file attached to the release.
+3. Open the downloaded APK on your Android device.
+4. If Android asks, allow installation from the browser or file manager you used.
+5. Open Bookmarks and start saving links from your favorite apps.
+
+The Android release requires a compatible Android device. Check the release notes for the minimum supported Android version.
+
+## Tech stack
+
+| Area | Technology |
+| --- | --- |
+| Language | TypeScript |
+| UI | React Native |
+| Framework | Expo SDK 58 |
+| Navigation | Expo Router |
+| Local storage | Expo SQLite |
+| Link sharing | Expo native sharing and platform integrations |
+| Images | Expo Image |
+| Authentication lock | Device authentication and biometrics |
+| Build | EAS Build |
+| Releases | GitHub Actions and GitHub Releases |
+
+The repository targets Android and iOS. Native capabilities and release builds depend on the platform-specific configuration and available development environment.
+
+## Build locally
 
 ### Requirements
 
 - Node.js 22.13 or newer
 - npm
-- Android Studio and Android SDK for local Android builds
-- An Expo account for EAS builds
+- Android Studio with the Android SDK installed for Android development
+- An Android device or emulator
+- An Expo account for EAS cloud builds
 
-### Install and run
+### Clone the repository
+
+```bash
+git clone https://github.com/nagraj05/bookmarks.git
+cd bookmarks
+```
+
+### Install dependencies
 
 ```bash
 npm install
+```
+
+### Start the development server
+
+```bash
 npx expo start
 ```
 
-This project uses a development build because sharing and other native capabilities are not limited to Expo Go's bundled native modules.
+This project uses a development build because link sharing and other native capabilities require native modules beyond those bundled with Expo Go.
 
-To build and install locally on a connected Android device:
+### Build and run on Android
+
+Connect an Android device with USB debugging enabled, or start an emulator, then run:
 
 ```bash
 npx expo run:android
 ```
 
-To create an installable preview build with EAS:
+### Create an installable preview APK
 
 ```bash
 npx eas-cli@latest build --platform android --profile preview
 ```
 
+The EAS build profile must be configured to produce an APK if you want to install the output directly on an Android device.
+
 ## Quality checks
+
+Run the following checks before submitting changes or publishing a release:
 
 ```bash
 npx expo lint
@@ -82,14 +134,39 @@ npx tsc --noEmit
 npx expo-doctor
 ```
 
-## Technology
+## Create a release
 
-- Expo SDK 58 and React Native 0.88
-- Expo Router for file-based navigation
-- Expo SQLite for persistent on-device storage
-- Expo Sharing for native share targets
-- Expo Image for cached link previews
-- TypeScript
+Bookmarks uses Git tags to trigger the automated Android release workflow.
+
+Every release should have a matching Git tag, GitHub release notes, and an entry in [CHANGELOG.md](CHANGELOG.md).
+
+### One-time repository setup
+
+1. Create an Expo access token at [expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens).
+2. Open the repository's **Settings → Secrets and variables → Actions**.
+3. Add a repository secret named `EXPO_TOKEN`.
+4. Ensure the EAS project and Android build profile are configured correctly.
+
+Never commit access tokens, signing credentials, or other secrets to the repository.
+
+### Publish a release
+
+Update `CHANGELOG.md` and the app version, commit the changes, and push them to `main`. Then create and push a version tag:
+
+```bash
+git add CHANGELOG.md
+git commit -m "Prepare v1.0.1 release"
+git push origin main
+
+git tag -a v1.0.1 -m "Bookmarks v1.0.1"
+git push origin v1.0.1
+```
+
+Tags beginning with `v` trigger the Android release workflow.
+
+GitHub Actions runs the configured quality checks, builds an installable APK through EAS, creates a GitHub Release with generated notes, and attaches the APK. The release is published only after the required checks and build succeed.
+
+EAS increments the Android `versionCode` for each release build so that newer APKs can update existing installations, provided the application ID and signing configuration remain compatible.
 
 ## Project structure
 
@@ -100,25 +177,25 @@ src/
 ├── hooks/        # Theme and application hooks
 ├── lib/          # SQLite, bookmark, and metadata logic
 └── providers/    # Application-wide providers
+
+assets/
+└── images/       # App icons and image assets
+
+.github/
+└── workflows/    # Automated Android release workflow
 ```
 
-## Releases
+## Roadmap
 
-Every release has a matching Git tag, GitHub release notes, and entry in [CHANGELOG.md](CHANGELOG.md).
+- Improve bookmark organization, search, and filtering.
+- Add import and export for local bookmark backups.
+- Improve link metadata fetching and preview reliability.
+- Continue polishing accessibility and the overall user experience.
+- Expand and validate the iOS implementation.
+- Explore optional cloud synchronization while keeping local storage a first-class option.
 
-Pushing a tag whose name starts with `v` automatically runs the Android release workflow. The workflow checks the project, builds an installable APK with EAS, creates the GitHub release with generated notes, and attaches the APK. EAS increments the Android `versionCode` for every release build so new APKs can update existing installations.
+---
 
-### One-time repository setup
-
-Create an Expo access token at [expo.dev/settings/access-tokens](https://expo.dev/settings/access-tokens), then add it to the GitHub repository under **Settings → Secrets and variables → Actions** as a repository secret named `EXPO_TOKEN`.
-
-### Publish a release
-
-Update `CHANGELOG.md` and the app version, commit and push the changes to `main`, then create and push a version tag:
-
-```bash
-git tag -a v1.0.1 -m "Bookmarks v1.0.1"
-git push origin v1.0.1
-```
-
-The workflow is available under the repository's **Actions** tab. A release is published only after linting, type checking, Expo Doctor, and the EAS build succeed.
+<div align="center">
+  Made with React Native, Expo, and TypeScript.
+</div>
