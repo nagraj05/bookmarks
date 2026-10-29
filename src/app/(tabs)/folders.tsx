@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -105,6 +105,18 @@ export default function FoldersScreen() {
       }, 'Loading folders…'),
     [db, runWithLoader],
   );
+
+  useEffect(() => {
+    let active = true;
+
+    void getFolders(db).then((nextFolders) => {
+      if (active) setFolders(nextFolders);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [db]);
 
   useFocusEffect(
     useCallback(() => {
