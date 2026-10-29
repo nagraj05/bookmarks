@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-29
+
 ### Added
 
 - Automated Android APK builds and GitHub releases for pushed `v*` tags
@@ -45,5 +47,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/nagraj05/bookmarks/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/nagraj05/bookmarks/releases/tag/v1.0.0
