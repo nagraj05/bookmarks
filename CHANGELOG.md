@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-10-31
+
+### Added
+
+- Added folder-style tabs to user folder cards
+- Added an animated Show More control that keeps app folders compact until expanded
+- Added a Settings footer with the current app version and a link to the creator's GitHub profile
+
+### Changed
+
+- Redesigned the bottom navigation as three smaller, independent floating controls with light and dark theme support
+- Placed all four folder long-press actions in a single row
+- Improved folder icon spacing and changed new-folder color swatches to rounded squares
+
+### Fixed
+
+- Smoothed the app-folder expand and collapse transitions
+- Increased screen bottom spacing so content stays clear of the floating navigation
+
 ## [1.4.1] - 2026-10-31
 
 ### Changed
@@ -122,7 +141,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/nagraj05/bookmarks/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/nagraj05/bookmarks/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/nagraj05/bookmarks/compare/v1.3.0...v1.3.1
