@@ -15,7 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { Easing, FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
+import Animated, { Easing, FadeInUp, FadeOut, LinearTransition } from 'react-native-reanimated';
 
 import { BrutalButton, BrutalCard, ScreenHeader } from '@/components/brutal';
 import {
@@ -44,7 +44,7 @@ const folderColors = ['#FFD23F', '#FF6B9E', '#63D7FF', '#8BE28B', '#B59CFF', '#F
 const primaryFolderIcons = FOLDER_ICON_OPTIONS.slice(0, 7);
 const appFolderLayout = LinearTransition.duration(320).easing(Easing.out(Easing.cubic));
 const appFolderEnter = FadeInUp.duration(320).easing(Easing.out(Easing.cubic));
-const appFolderExit = FadeOutUp.duration(240).easing(Easing.inOut(Easing.cubic));
+const appFolderExit = FadeOut.duration(140).easing(Easing.out(Easing.cubic));
 
 const folderActionSymbols = {
   rename: { ios: 'pencil', android: 'edit', web: 'edit' },
@@ -260,7 +260,6 @@ export default function FoldersScreen() {
               <Animated.View
                 entering={appFolderEnter}
                 exiting={appFolderExit}
-                layout={appFolderLayout}
                 style={styles.grid}>
                 {appFolders.slice(4).map((source) => (
                   <Pressable
@@ -703,9 +702,6 @@ export default function FoldersScreen() {
                       </Pressable>
                     ) : null}
                   </View>
-                  <BrutalButton compact backgroundColor={theme.backgroundElement} onPress={() => setFolderAction('menu')}>
-                    BACK
-                  </BrutalButton>
                 </View>
               ) : null}
 
@@ -758,9 +754,9 @@ const styles = StyleSheet.create({
   },
   colors: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   color: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 38,
+    height: 38,
+    borderRadius: 11,
     borderWidth: 2,
     shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 1,
@@ -845,7 +841,13 @@ const styles = StyleSheet.create({
   },
   sheetCloseText: { fontSize: 27, lineHeight: 29, fontWeight: '900', includeFontPadding: false },
   sheetContent: { gap: 11, paddingBottom: 5 },
-  iconChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 5 },
+  iconChoices: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 10,
+    paddingBottom: 5,
+  },
   iconChoice: {
     width: 52,
     height: 52,
@@ -879,10 +881,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubbleCloseText: { fontSize: 25, lineHeight: 27, fontWeight: '900', includeFontPadding: false },
-  actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
+  actionRow: { flexDirection: 'row', gap: 9 },
   iconAction: {
-    flexGrow: 1,
-    flexBasis: '45%',
+    flex: 1,
+    minWidth: 0,
     height: 54,
     borderWidth: 3,
     borderRadius: 12,

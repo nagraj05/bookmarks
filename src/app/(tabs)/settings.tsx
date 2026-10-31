@@ -1,3 +1,6 @@
+import Constants from 'expo-constants';
+import { Image } from 'expo-image';
+import * as Linking from 'expo-linking';
 import { SymbolView } from 'expo-symbols';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useEffect, useState } from 'react';
@@ -213,22 +216,26 @@ export default function SettingsScreen() {
           </Pressable>
         </BrutalCard>
 
-        <Text style={[styles.sectionTitle, { color: theme.text }]}>COMING NEXT</Text>
-        <View style={styles.stack}>
-          {[
-            ['⇩', 'Backup & restore', 'Export a portable local backup file.'],
-          ].map(([icon, title, body]) => (
-            <BrutalCard key={title} backgroundColor={theme.blue} style={styles.rowCard}>
-              <Text style={styles.itemIcon}>{icon}</Text>
-              <View style={styles.rowCopy}>
-                <Text style={styles.darkTitle}>{title}</Text>
-                <Text style={styles.darkBody}>{body}</Text>
-              </View>
-            </BrutalCard>
-          ))}
+        <View style={styles.footer}>
+          <Text style={[styles.footerName, { color: theme.text }]}>BOOKMARKS</Text>
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel="Open Nagraj Tadingi's GitHub profile"
+            onPress={() => void Linking.openURL('https://github.com/nagraj05')}
+            style={({ pressed }) => [styles.creatorLink, pressed && styles.creatorLinkPressed]}>
+            <Text style={[styles.creatorText, { color: theme.textSecondary }]}>Created by </Text>
+            <Text style={[styles.creatorName, { color: theme.text }]}>Nagraj Tadingi</Text>
+            <Image
+              source={require('../../../assets/images/github.svg')}
+              svgVariables={{ '--icon': theme.text }}
+              style={styles.githubIcon}
+              contentFit="contain"
+            />
+          </Pressable>
+          <Text style={[styles.version, { color: theme.textSecondary }]}>
+            Version {Constants.expoConfig?.version ?? '—'}
+          </Text>
         </View>
-
-        <Text style={[styles.version, { color: theme.textSecondary }]}>BOOKMARKS · Created by Nagraj Tadingi</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -284,5 +291,12 @@ const styles = StyleSheet.create({
   itemIcon: { color: '#111111', fontSize: 28, fontWeight: '900' },
   darkTitle: { color: '#111111', fontSize: 16, fontWeight: '900' },
   darkBody: { color: '#111111', fontSize: 12, lineHeight: 17, fontWeight: '600' },
-  version: { textAlign: 'center', fontSize: 10, fontWeight: '900', letterSpacing: 1.2, marginTop: 10 },
+  footer: { alignItems: 'center', gap: 5, marginTop: 10 },
+  footerName: { fontSize: 11, fontWeight: '900', letterSpacing: 1.8 },
+  version: { textAlign: 'center', fontSize: 10, lineHeight: 15, fontWeight: '600' },
+  creatorLink: { flexDirection: 'row', alignItems: 'center' },
+  creatorLinkPressed: { opacity: 0.55 },
+  creatorText: { fontSize: 10, lineHeight: 15, fontWeight: '600' },
+  creatorName: { fontSize: 10, lineHeight: 15, fontWeight: '800' },
+  githubIcon: { width: 14, height: 14, marginLeft: 5 },
 });
