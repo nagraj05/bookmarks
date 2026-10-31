@@ -24,14 +24,15 @@ Bookmarks is a colorful, local-first bookmark manager for Android and iOS. Save 
 - Send shared links straight to your Inbox without interrupting your workflow.
 - Store bookmarks, folders, and preferences locally using SQLite.
 - Prevent duplicate links from being saved.
-- Organize bookmarks into simple, non-nested folders.
-- Rename, recolor, and delete folders with a long press.
+- Organize bookmarks into simple, non-nested folders with custom colors and icons.
+- Rename, recolor, change icons, and delete folders with a long press.
 - Move bookmarks between folders from the details screen.
 - Fetch page titles, descriptions, favicons, and preview images.
 - Filter bookmarks by source app, including X, Instagram, Facebook, Threads, Substack, YouTube, Reddit, and more.
 - Search, favorite, archive, restore, trash, and permanently delete bookmarks.
 - Open links in their associated apps, with a browser fallback.
 - Optionally lock the app using fingerprint, face, or device authentication.
+- Receive an in-app alert when a newer Android APK is available on GitHub Releases.
 - Choose a light, dark, or system-matched theme.
 - Continue accessing saved bookmarks offline after link metadata has been fetched.
 
@@ -53,7 +54,7 @@ Bookmarks is designed to keep your personal collection on your device.
 ## Install the app
 
 1. Open the [latest GitHub release](../../releases/latest).
-2. Download the `Bookmarks-*.apk` file attached to the release.
+2. Download the `bookmarks-v*-android.apk` file attached to the release.
 3. Open the downloaded APK on your Android device.
 4. If Android asks, allow installation from the browser or file manager you used.
 5. Open Bookmarks and start saving links from your favorite apps.

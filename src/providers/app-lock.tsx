@@ -9,7 +9,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addScreenOffListener } from '../../modules/screen-lock';
@@ -190,12 +190,33 @@ export function AppLockProvider({ children }: PropsWithChildren) {
             </View>
             <Text style={styles.lockTitle}>BOOKMARKS LOCKED</Text>
             <Text style={styles.lockBody}>Authenticate to see your saved links.</Text>
-            <BrutalButton
-              backgroundColor={theme.yellow}
-              loading={authenticating}
-              onPress={() => void unlock()}>
-              UNLOCK
-            </BrutalButton>
+            <Pressable
+              accessibilityLabel="Unlock Bookmarks"
+              accessibilityRole="button"
+              disabled={authenticating}
+              onPress={() => void unlock()}
+              style={({ pressed }) => [
+                styles.fingerprintButton,
+                {
+                  backgroundColor: theme.yellow,
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                  boxShadow: `${pressed ? 1 : 5}px ${pressed ? 1 : 5}px 0px ${theme.shadow}`,
+                },
+                pressed && styles.fingerprintPressed,
+                authenticating && styles.fingerprintDisabled,
+              ]}>
+              {authenticating ? (
+                <ActivityIndicator color="#111111" size="large" />
+              ) : (
+                <SymbolView
+                  name={{ ios: 'touchid', android: 'fingerprint', web: 'fingerprint' }}
+                  tintColor="#111111"
+                  size={42}
+                  style={styles.fingerprintIcon}
+                />
+              )}
+            </Pressable>
           </BrutalCard>
         </SafeAreaView>
       ) : (
@@ -228,4 +249,20 @@ const styles = StyleSheet.create({
   lockIcon: { width: 36, height: 36 },
   lockTitle: { color: '#111111', fontSize: 24, lineHeight: 28, fontWeight: '900', textAlign: 'center' },
   lockBody: { color: '#29232F', fontSize: 14, lineHeight: 20, fontWeight: '700', textAlign: 'center' },
+  fingerprintButton: {
+    width: 78,
+    height: 78,
+    alignSelf: 'center',
+    borderWidth: 3,
+    borderRadius: 39,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 5, height: 5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 7,
+  },
+  fingerprintPressed: { transform: [{ translateX: 4 }, { translateY: 4 }] },
+  fingerprintDisabled: { opacity: 0.7 },
+  fingerprintIcon: { width: 42, height: 42 },
 });

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bookmarks",
     "slug": "bookmarks",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "orientation": "portrait",
     "icon": "./assets/images/bookmarks-icon-v5.png",
     "scheme": "bookmarks",
@@ -15,7 +15,7 @@
       "icon": "./assets/images/bookmarks-icon-v5.png",
       "adaptiveIcon": {
         "backgroundColor": "#FFD400",
-        "foregroundImage": "./assets/images/bookmarks-icon-v5.png"
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.tadingi.bookmarks"

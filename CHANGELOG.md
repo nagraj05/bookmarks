@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-10-31
+
+### Changed
+
+- Replaced the app-lock text button with a centered fingerprint control
+- Updated the README with folder icon and in-app Android update features
+
+### Fixed
+
+- Centered the pink bookmark artwork within Android's adaptive launcher icon safe area
+
 ## [1.4.0] - 2026-10-31
 
 ### Added
@@ -111,7 +122,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/nagraj05/bookmarks/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/nagraj05/bookmarks/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/nagraj05/bookmarks/compare/v1.2.0...v1.3.0
