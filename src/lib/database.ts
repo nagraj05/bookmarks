@@ -160,4 +160,12 @@ export async function migrateDatabase(db: SQLiteDatabase) {
       PRAGMA user_version = 10;
     `);
   }
+
+  if ((version?.user_version ?? 0) < 11) {
+    await db.execAsync(`
+      ALTER TABLE folders ADD COLUMN icon TEXT NOT NULL DEFAULT 'folder';
+      UPDATE folders SET icon = 'inbox' WHERE id = 1;
+      PRAGMA user_version = 11;
+    `);
+  }
 }

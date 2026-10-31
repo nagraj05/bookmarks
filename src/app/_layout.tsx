@@ -7,6 +7,7 @@ import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppUpdateModal } from '@/components/app-update-modal';
 import { LaunchAnimation } from '@/components/launch-animation';
 import { DATABASE_NAME, migrateDatabase } from '@/lib/database';
 import { AppLockProvider } from '@/providers/app-lock';
@@ -31,6 +32,7 @@ function AppNavigation() {
         <Stack.Screen name="handle-share" />
       </Stack>
       {showLaunch ? <LaunchAnimation /> : null}
+      <AppUpdateModal />
     </ThemeProvider>
   );
 }

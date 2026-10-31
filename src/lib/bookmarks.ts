@@ -31,6 +31,7 @@ export type Folder = {
   id: number;
   name: string;
   color: string;
+  icon: string;
   created_at: string;
   bookmark_count: number;
 };
@@ -119,10 +120,15 @@ export async function getFolders(db: SQLiteDatabase) {
   `);
 }
 
-export async function createFolder(db: SQLiteDatabase, name: string, color: string) {
+export async function createFolder(db: SQLiteDatabase, name: string, color: string, icon: string) {
   const cleanName = name.trim();
   if (!cleanName) throw new Error('Folder name is required.');
-  const result = await db.runAsync('INSERT INTO folders (name, color) VALUES (?, ?)', cleanName, color);
+  const result = await db.runAsync(
+    'INSERT INTO folders (name, color, icon) VALUES (?, ?, ?)',
+    cleanName,
+    color,
+    icon,
+  );
   return result.lastInsertRowId;
 }
 
@@ -134,6 +140,10 @@ export async function renameFolder(db: SQLiteDatabase, id: number, name: string)
 
 export async function updateFolderColor(db: SQLiteDatabase, id: number, color: string) {
   await db.runAsync('UPDATE folders SET color = ? WHERE id = ?', color, id);
+}
+
+export async function updateFolderIcon(db: SQLiteDatabase, id: number, icon: string) {
+  await db.runAsync('UPDATE folders SET icon = ? WHERE id = ?', icon, id);
 }
 
 export async function deleteFolder(db: SQLiteDatabase, id: number) {

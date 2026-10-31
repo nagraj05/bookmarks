@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BrutalButton, BrutalCard } from '@/components/brutal';
+import { BrutalButton } from '@/components/brutal';
 import { useTheme } from '@/hooks/use-theme';
 import { addBookmark, type Folder, getFolders, updateBookmarkMetadata } from '@/lib/bookmarks';
 import { readableTextColor } from '@/lib/color';
@@ -52,28 +52,28 @@ export default function AddBookmarkScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
-          <View>
-            <Text style={[styles.eyebrow, { color: theme.textSecondary }]}>SAVE IT FOR LATER</Text>
-            <Text style={[styles.title, { color: theme.text }]}>New link</Text>
-          </View>
+          <Text style={[styles.title, { color: theme.text }]}>New link</Text>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close"
             onPress={() => router.back()}
             style={[
               styles.close,
               {
                 borderColor: theme.border,
-                shadowColor: theme.shadow,
-                boxShadow: `5px 5px 0px ${theme.shadow}`,
+                backgroundColor: theme.backgroundElement,
               },
             ]}>
             <Text style={[styles.closeText, { color: theme.text }]}>×</Text>
           </Pressable>
         </View>
 
-        <BrutalCard backgroundColor={theme.yellow} style={styles.tipCard}>
-          <Text style={styles.tipTitle}>QUICK TIP</Text>
-          <Text style={styles.tipBody}>You can also share any link from another app directly to Bookmarks.</Text>
-        </BrutalCard>
+        <View style={styles.tip}>
+          <Text style={[styles.tipTitle, { color: theme.text }]}>QUICK TIP</Text>
+          <Text style={[styles.tipBody, { color: theme.textSecondary }]}>
+            You can also share any link from another app directly to Bookmarks.
+          </Text>
+        </View>
 
         <View style={styles.field}>
           <Text style={[styles.label, { color: theme.text }]}>URL *</Text>
@@ -143,7 +143,7 @@ export default function AddBookmarkScreen() {
         </View>
 
         <BrutalButton onPress={() => void save()} loading={saving} disabled={!url.trim()} backgroundColor={theme.pink}>
-          SAVE BOOKMARK ↗
+          SAVE BOOKMARK
         </BrutalButton>
       </ScrollView>
     </SafeAreaView>
@@ -154,24 +154,19 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 20, gap: 24 },
   topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  eyebrow: { fontSize: 11, fontWeight: '900', letterSpacing: 1.4 },
   title: { fontSize: 34, lineHeight: 38, fontWeight: '900', letterSpacing: -1 },
   close: {
-    width: 42,
-    height: 42,
-    borderWidth: 3,
-    borderRadius: 12,
+    width: 38,
+    height: 38,
+    borderWidth: 2,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowOffset: { width: 5, height: 5 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 5,
   },
-  closeText: { fontSize: 30, lineHeight: 32, fontWeight: '900' },
-  tipCard: { padding: 16 },
-  tipTitle: { color: '#111111', fontSize: 13, fontWeight: '900', letterSpacing: 1.2 },
-  tipBody: { color: '#111111', fontSize: 13, lineHeight: 19, fontWeight: '600', marginTop: 3 },
+  closeText: { fontSize: 27, lineHeight: 29, fontWeight: '900', includeFontPadding: false },
+  tip: { gap: 3, paddingHorizontal: 2 },
+  tipTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 1.2 },
+  tipBody: { fontSize: 13, lineHeight: 19, fontWeight: '600' },
   field: { gap: 8 },
   label: { fontSize: 12, fontWeight: '900', letterSpacing: 1.1 },
   input: {

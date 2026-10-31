@@ -17,6 +17,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalButton, BrutalCard, ScreenHeader } from '@/components/brutal';
+import {
+  FOLDER_ICON_OPTIONS,
+  FolderGlyph,
+  type FolderIconKey,
+} from '@/components/folder-icon';
 import { SourceIcon } from '@/components/source-icon';
 import { useTheme } from '@/hooks/use-theme';
 import { getAppFoldersEnabled } from '@/lib/app-settings';
@@ -30,14 +35,17 @@ import {
   getFolders,
   renameFolder,
   updateFolderColor,
+  updateFolderIcon,
 } from '@/lib/bookmarks';
 import { readableTextColor } from '@/lib/color';
 
 const folderColors = ['#FFD23F', '#FF6B9E', '#63D7FF', '#8BE28B', '#B59CFF', '#FF8A5B'];
+const primaryFolderIcons = FOLDER_ICON_OPTIONS.slice(0, 7);
 
 const folderActionSymbols = {
   rename: { ios: 'pencil', android: 'edit', web: 'edit' },
   color: { ios: 'paintpalette.fill', android: 'palette', web: 'palette' },
+  icon: { ios: 'square.grid.2x2.fill', android: 'category', web: 'category' },
   delete: { ios: 'trash.fill', android: 'delete', web: 'delete' },
 } as const;
 
@@ -99,8 +107,11 @@ export default function FoldersScreen() {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [color, setColor] = useState(folderColors[1]);
+  const [icon, setIcon] = useState<FolderIconKey>('folder');
+  const [showAllCreateIcons, setShowAllCreateIcons] = useState(false);
+  const [showAllEditIcons, setShowAllEditIcons] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);
-  const [folderAction, setFolderAction] = useState<'menu' | 'rename' | 'color' | 'delete'>('menu');
+  const [folderAction, setFolderAction] = useState<'menu' | 'rename' | 'color' | 'icon' | 'delete'>('menu');
   const [editName, setEditName] = useState('');
   const longPressedFolderId = useRef<number | null>(null);
 
@@ -124,14 +135,27 @@ export default function FoldersScreen() {
   const saveFolder = async () => {
     try {
       await runWithLoader(async () => {
-        await createFolder(db, name, color);
-        setName('');
-        setCreating(false);
+        await createFolder(db, name, color, icon);
+        closeCreateSheet();
         await load();
       }, 'Creating folder…');
     } catch (error) {
       Alert.alert('Could not create folder', error instanceof Error ? error.message : 'Try another name.');
     }
+  };
+
+  const openCreateSheet = () => {
+    setName('');
+    setColor(folderColors[1]);
+    setIcon('folder');
+    setShowAllCreateIcons(false);
+    setCreating(true);
+  };
+
+  const closeCreateSheet = () => {
+    setCreating(false);
+    setName('');
+    setShowAllCreateIcons(false);
   };
 
   const openFolderActions = (folder: Folder) => {
@@ -167,6 +191,15 @@ export default function FoldersScreen() {
     }, 'Updating folder…');
   };
 
+  const saveFolderIcon = async (nextIcon: FolderIconKey) => {
+    if (!selectedFolder) return;
+    await runWithLoader(async () => {
+      await updateFolderIcon(db, selectedFolder.id, nextIcon);
+      await load();
+      closeFolderActions();
+    }, 'Updating folder…');
+  };
+
   const removeSelectedFolder = async () => {
     if (!selectedFolder || selectedFolder.id === 1) return;
     try {
@@ -186,48 +219,11 @@ export default function FoldersScreen() {
         <ScreenHeader
           title="Folders"
           action={
-            <BrutalButton compact backgroundColor={theme.green} onPress={() => setCreating((value) => !value)}>
-              {creating ? 'CLOSE' : '+ NEW'}
+            <BrutalButton compact backgroundColor={theme.green} onPress={openCreateSheet}>
+              + NEW
             </BrutalButton>
           }
         />
-
-        {creating ? (
-          <BrutalCard backgroundColor={theme.purple} style={styles.createCard}>
-            <Text style={styles.createTitle}>NEW FOLDER</Text>
-            <TextInput
-              value={name}
-              onChangeText={setName}
-              placeholder="e.g. Design inspiration"
-              placeholderTextColor="#5A5264"
-              autoFocus
-              returnKeyType="done"
-              onSubmitEditing={() => void saveFolder()}
-              style={[styles.input, { borderColor: theme.border }]}
-            />
-            <View style={styles.colors}>
-              {folderColors.map((item) => (
-                <Pressable
-                  key={item}
-                  onPress={() => setColor(item)}
-                  style={[
-                    styles.color,
-                    {
-                      backgroundColor: item,
-                      borderColor: theme.border,
-                      shadowColor: theme.shadow,
-                      boxShadow: `3px 3px 0px ${theme.shadow}`,
-                    },
-                    color === item && styles.selectedColor,
-                  ]}
-                />
-              ))}
-            </View>
-            <BrutalButton backgroundColor={theme.yellow} onPress={() => void saveFolder()} disabled={!name.trim()}>
-              CREATE FOLDER
-            </BrutalButton>
-          </BrutalCard>
-        ) : null}
 
         {appFoldersEnabled && appFolders.length > 0 ? (
           <View style={styles.folderSection}>
@@ -246,7 +242,7 @@ export default function FoldersScreen() {
                     <View style={[styles.appIconShell, { borderColor: theme.border, backgroundColor: '#FFFFFF' }]}>
                       <SourceIcon sourceKey={source.key} size={42} />
                     </View>
-                    <View style={styles.appFolderCopy}>
+                    <View style={styles.folderCopy}>
                       <Text style={[styles.appFolderName, { color: theme.text }]} numberOfLines={1}>
                         {source.label}
                       </Text>
@@ -280,16 +276,157 @@ export default function FoldersScreen() {
               delayLongPress={350}
               style={({ pressed }) => [styles.folderPressable, pressed && styles.pressed]}>
               <BrutalCard backgroundColor={folder.color} style={styles.folderCard}>
-                <Text
-                  style={[styles.folderName, { color: readableTextColor(folder.color) }]}
-                  numberOfLines={2}>
-                  {folder.name}
-                </Text>
+                <View
+                  style={[
+                    styles.folderIconShell,
+                    { borderColor: theme.border, backgroundColor: 'rgba(255,255,255,0.78)' },
+                  ]}>
+                  <FolderGlyph icon={folder.icon} color="#111111" size={34} />
+                </View>
+                <View style={styles.folderCopy}>
+                  <Text
+                    style={[styles.folderName, { color: readableTextColor(folder.color) }]}
+                    numberOfLines={2}>
+                    {folder.name}
+                  </Text>
+                </View>
               </BrutalCard>
             </Pressable>
           ))}
         </View>
       </ScrollView>
+
+      <Modal
+        visible={creating}
+        transparent
+        animationType="slide"
+        statusBarTranslucent
+        onRequestClose={closeCreateSheet}>
+        <View style={styles.createModalRoot}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close new folder"
+            style={styles.backdrop}
+            onPress={closeCreateSheet}
+          />
+          <KeyboardAvoidingView
+            pointerEvents="box-none"
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.sheetLayer}>
+            <View
+              style={[
+                styles.createSheet,
+                {
+                  backgroundColor: theme.backgroundElement,
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                  boxShadow: `0px -7px 0px ${theme.shadow}`,
+                },
+              ]}>
+              <View style={[styles.sheetHandle, { backgroundColor: theme.textSecondary }]} />
+              <View style={styles.sheetHeader}>
+                <View>
+                  <Text style={[styles.sheetEyebrow, { color: theme.textSecondary }]}>MAKE IT YOURS</Text>
+                  <Text style={[styles.sheetTitle, { color: theme.text }]}>New folder</Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  onPress={closeCreateSheet}
+                  style={[styles.sheetClose, { borderColor: theme.border, backgroundColor: theme.background }]}>
+                  <Text style={[styles.sheetCloseText, { color: theme.text }]}>×</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.sheetContent}>
+                <Text style={[styles.editorLabel, { color: theme.text }]}>NAME</Text>
+                <TextInput
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="e.g. Design inspiration"
+                  placeholderTextColor={theme.textSecondary}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (name.trim()) void saveFolder();
+                  }}
+                  style={[
+                    styles.input,
+                    { borderColor: theme.border, backgroundColor: theme.background, color: theme.text },
+                  ]}
+                />
+
+                <Text style={[styles.editorLabel, { color: theme.text }]}>COLOR</Text>
+                <View style={styles.colors}>
+                  {folderColors.map((item) => {
+                    const selected = color === item;
+                    return (
+                      <Pressable
+                        key={item}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Use color ${item}`}
+                        accessibilityState={{ selected }}
+                        onPress={() => setColor(item)}
+                        style={[
+                          styles.color,
+                          {
+                            backgroundColor: item,
+                            borderColor: theme.border,
+                            shadowColor: theme.shadow,
+                            boxShadow: `3px 3px 0px ${theme.shadow}`,
+                          },
+                          selected && styles.selectedColor,
+                        ]}
+                      />
+                    );
+                  })}
+                </View>
+
+                <Text style={[styles.editorLabel, { color: theme.text }]}>ICON</Text>
+                <View style={styles.iconChoices}>
+                  {(showAllCreateIcons ? FOLDER_ICON_OPTIONS : primaryFolderIcons).map((item) => {
+                    const selected = icon === item.key;
+                    return (
+                      <Pressable
+                        key={item.key}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.label} icon`}
+                        accessibilityState={{ selected }}
+                        onPress={() => setIcon(item.key)}
+                        style={[
+                          styles.iconChoice,
+                          {
+                            backgroundColor: selected ? color : theme.background,
+                            borderColor: theme.border,
+                          },
+                          selected && styles.selectedIconChoice,
+                        ]}>
+                        <FolderGlyph icon={item.key} color={selected ? readableTextColor(color) : theme.text} size={27} />
+                      </Pressable>
+                    );
+                  })}
+                  {!showAllCreateIcons ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Show more folder icons"
+                      onPress={() => setShowAllCreateIcons(true)}
+                      style={[styles.iconChoice, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                      <Text style={[styles.moreIconsText, { color: theme.text }]}>…</Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              </ScrollView>
+
+              <BrutalButton backgroundColor={color} onPress={() => void saveFolder()} disabled={!name.trim()}>
+                CREATE FOLDER
+              </BrutalButton>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       <Modal
         visible={selectedFolder !== null}
@@ -366,6 +503,17 @@ export default function FoldersScreen() {
                     borderColor={theme.border}
                     shadowColor={theme.shadow}
                     onPress={() => setFolderAction('color')}
+                  />
+                  <FolderActionIconButton
+                    action="icon"
+                    label="Change folder icon"
+                    backgroundColor={theme.purple}
+                    borderColor={theme.border}
+                    shadowColor={theme.shadow}
+                    onPress={() => {
+                      setShowAllEditIcons(false);
+                      setFolderAction('icon');
+                    }}
                   />
                   <FolderActionIconButton
                     action="delete"
@@ -446,6 +594,51 @@ export default function FoldersScreen() {
                 </View>
               ) : null}
 
+              {folderAction === 'icon' ? (
+                <View style={styles.colorEditor}>
+                  <Text style={[styles.editorLabel, { color: theme.text }]}>CHOOSE AN ICON</Text>
+                  <View style={styles.iconChoices}>
+                    {(showAllEditIcons ? FOLDER_ICON_OPTIONS : primaryFolderIcons).map((item) => {
+                      const selected = selectedFolder?.icon === item.key;
+                      return (
+                        <Pressable
+                          key={item.key}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${item.label} icon`}
+                          accessibilityState={{ selected }}
+                          onPress={() => void saveFolderIcon(item.key)}
+                          style={[
+                            styles.iconChoice,
+                            {
+                              backgroundColor: selected ? selectedFolder?.color : theme.background,
+                              borderColor: theme.border,
+                            },
+                            selected && styles.selectedIconChoice,
+                          ]}>
+                          <FolderGlyph
+                            icon={item.key}
+                            color={selected ? readableTextColor(selectedFolder?.color ?? '#FFFFFF') : theme.text}
+                            size={27}
+                          />
+                        </Pressable>
+                      );
+                    })}
+                    {!showAllEditIcons ? (
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel="Show more folder icons"
+                        onPress={() => setShowAllEditIcons(true)}
+                        style={[styles.iconChoice, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                        <Text style={[styles.moreIconsText, { color: theme.text }]}>…</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  <BrutalButton compact backgroundColor={theme.backgroundElement} onPress={() => setFolderAction('menu')}>
+                    BACK
+                  </BrutalButton>
+                </View>
+              ) : null}
+
               {folderAction === 'delete' ? (
                 <View style={styles.deleteEditor}>
                   <Text style={[styles.deleteTitle, { color: theme.text }]}>DELETE THIS FOLDER?</Text>
@@ -483,8 +676,6 @@ export default function FoldersScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 18, paddingBottom: 36, gap: 22 },
-  createCard: { padding: 18, gap: 14 },
-  createTitle: { color: '#111111', fontSize: 16, fontWeight: '900', letterSpacing: 1.3 },
   input: {
     height: 50,
     borderWidth: 3,
@@ -512,9 +703,10 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
   folderPressable: { width: '47%' },
   pressed: { transform: [{ translateX: 4 }, { translateY: 4 }] },
-  folderCard: { minHeight: 132, padding: 16, justifyContent: 'center' },
-  folderName: { fontSize: 20, lineHeight: 23, fontWeight: '900' },
-  appFolderCard: { minHeight: 132, padding: 14, gap: 10, justifyContent: 'space-between' },
+  folderCopy: { gap: 1, paddingHorizontal: 3 },
+  folderCard: { minHeight: 142, padding: 14, gap: 10, justifyContent: 'space-between' },
+  folderName: { fontSize: 18, lineHeight: 22, fontWeight: '900' },
+  appFolderCard: { minHeight: 142, padding: 14, gap: 10, justifyContent: 'space-between' },
   appIconShell: {
     width: 54,
     height: 54,
@@ -523,8 +715,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  appFolderCopy: { gap: 2 },
-  appFolderName: { fontSize: 18, lineHeight: 22, fontWeight: '900' },
+  folderIconShell: {
+    width: 52,
+    height: 52,
+    borderWidth: 3,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appFolderName: { fontSize: 17, lineHeight: 21, fontWeight: '900' },
+  createModalRoot: { flex: 1, justifyContent: 'flex-end' },
+  sheetLayer: { flex: 1, justifyContent: 'flex-end' },
+  createSheet: {
+    maxHeight: '90%',
+    borderWidth: 3,
+    borderBottomWidth: 0,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 18,
+    paddingTop: 10,
+    paddingBottom: 24,
+    gap: 16,
+  },
+  sheetHandle: { width: 48, height: 5, borderRadius: 3, alignSelf: 'center', opacity: 0.45 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
+  sheetEyebrow: { fontSize: 10, lineHeight: 14, fontWeight: '900', letterSpacing: 1.5 },
+  sheetTitle: { fontSize: 28, lineHeight: 32, fontWeight: '900', letterSpacing: -0.6 },
+  sheetClose: {
+    width: 38,
+    height: 38,
+    borderWidth: 2,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetCloseText: { fontSize: 27, lineHeight: 29, fontWeight: '900', includeFontPadding: false },
+  sheetContent: { gap: 11, paddingBottom: 5 },
+  iconChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 5 },
+  iconChoice: {
+    width: 52,
+    height: 52,
+    borderWidth: 2,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedIconChoice: { borderWidth: 4 },
+  moreIconsText: { fontSize: 28, lineHeight: 30, fontWeight: '900', marginTop: -8 },
   modalRoot: { flex: 1, justifyContent: 'center' },
   backdrop: {
     position: 'absolute',
@@ -548,9 +785,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubbleCloseText: { fontSize: 25, lineHeight: 27, fontWeight: '900', includeFontPadding: false },
-  actionRow: { flexDirection: 'row', gap: 9 },
+  actionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   iconAction: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '45%',
     height: 54,
     borderWidth: 3,
     borderRadius: 12,

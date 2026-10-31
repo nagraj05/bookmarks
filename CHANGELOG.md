@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-10-31
+
+### Added
+
+- Folder icons with a larger expandable icon picker for new and existing folders
+- In-app Android update checks with direct GitHub Release APK downloads and a 24-hour Later option
+
+### Changed
+
+- Replaced the inline new-folder form with a bottom sheet ordered by name, color, and icon
+- Refined folder cards around icon-first layouts without bookmark counts
+- Simplified the New Link screen close button, quick tip, and save action
+
 ## [1.3.1] - 2026-10-30
 
 ### Fixed
@@ -98,7 +111,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...v1.4.0
 [1.3.1]: https://github.com/nagraj05/bookmarks/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/nagraj05/bookmarks/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/nagraj05/bookmarks/compare/v1.1.0...v1.2.0
