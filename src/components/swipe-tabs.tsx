@@ -134,10 +134,7 @@ function SwipeTabsContent({ state, descriptors, actions, emitter, preloadAll }: 
         style={[
           styles.tabBar,
           {
-            height: 64 + insets.bottom,
-            paddingBottom: 7 + insets.bottom,
-            backgroundColor: theme.backgroundElement,
-            borderColor: theme.border,
+            bottom: Math.max(insets.bottom, 14),
           },
         ]}>
         {state.routes.map((route, index) => {
@@ -168,11 +165,20 @@ function SwipeTabsContent({ state, descriptors, actions, emitter, preloadAll }: 
               onLongPress={() => {
                 emitter.emit({ type: 'tabLongPress', target: route.key });
               }}
-              style={styles.tabItem}>
+              style={({ pressed }) => [
+                styles.tabItem,
+                {
+                  backgroundColor: focused ? theme.pink : theme.backgroundElement,
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                  boxShadow: `${pressed ? 1 : 4}px ${pressed ? 1 : 4}px 0px ${theme.shadow}`,
+                },
+                pressed && styles.tabItemPressed,
+              ]}>
               <TabIcon
                 tab={tabIcon}
                 focused={focused}
-                color={focused ? theme.pink : theme.textSecondary}
+                color={focused ? '#111111' : theme.text}
               />
             </Pressable>
           );
@@ -221,18 +227,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBar: {
+    position: 'absolute',
+    left: '50%',
+    zIndex: 100,
+    width: 184,
+    height: 56,
+    marginLeft: -92,
     flexDirection: 'row',
-    borderTopWidth: 1,
-    paddingTop: 7,
-    elevation: 0,
-    shadowOpacity: 0,
+    justifyContent: 'center',
+    gap: 12,
   },
   tabItem: {
-    flex: 1,
+    width: 52,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
+    borderWidth: 3,
+    borderRadius: 17,
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 8,
   },
+  tabItemPressed: { transform: [{ translateX: 3 }, { translateY: 3 }] },
   symbol: {
     width: 25,
     height: 25,

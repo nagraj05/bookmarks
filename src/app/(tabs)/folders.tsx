@@ -15,6 +15,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { Easing, FadeInUp, FadeOutUp, LinearTransition } from 'react-native-reanimated';
 
 import { BrutalButton, BrutalCard, ScreenHeader } from '@/components/brutal';
 import {
@@ -41,6 +42,9 @@ import { readableTextColor } from '@/lib/color';
 
 const folderColors = ['#FFD23F', '#FF6B9E', '#63D7FF', '#8BE28B', '#B59CFF', '#FF8A5B'];
 const primaryFolderIcons = FOLDER_ICON_OPTIONS.slice(0, 7);
+const appFolderLayout = LinearTransition.duration(320).easing(Easing.out(Easing.cubic));
+const appFolderEnter = FadeInUp.duration(320).easing(Easing.out(Easing.cubic));
+const appFolderExit = FadeOutUp.duration(240).easing(Easing.inOut(Easing.cubic));
 
 const folderActionSymbols = {
   rename: { ios: 'pencil', android: 'edit', web: 'edit' },
@@ -104,6 +108,7 @@ export default function FoldersScreen() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [appFolders, setAppFolders] = useState<BookmarkSource[]>([]);
   const [appFoldersEnabled, setAppFoldersEnabled] = useState(false);
+  const [showAllAppFolders, setShowAllAppFolders] = useState(false);
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState('');
   const [color, setColor] = useState(folderColors[1]);
@@ -226,10 +231,10 @@ export default function FoldersScreen() {
         />
 
         {appFoldersEnabled && appFolders.length > 0 ? (
-          <View style={styles.folderSection}>
+          <Animated.View layout={appFolderLayout} style={styles.folderSection}>
             <Text style={[styles.sectionTitle, { color: theme.text }]}>APP FOLDERS</Text>
             <View style={styles.grid}>
-              {appFolders.map((source) => (
+              {appFolders.slice(0, 4).map((source) => (
                 <Pressable
                   key={source.key}
                   accessibilityRole="button"
@@ -251,15 +256,71 @@ export default function FoldersScreen() {
                 </Pressable>
               ))}
             </View>
-          </View>
+            {showAllAppFolders ? (
+              <Animated.View
+                entering={appFolderEnter}
+                exiting={appFolderExit}
+                layout={appFolderLayout}
+                style={styles.grid}>
+                {appFolders.slice(4).map((source) => (
+                  <Pressable
+                    key={source.key}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${source.label} app folder`}
+                    onPress={() =>
+                      router.push({ pathname: '/source/[key]', params: { key: source.key } })
+                    }
+                    style={({ pressed }) => [styles.folderPressable, pressed && styles.pressed]}>
+                    <BrutalCard backgroundColor={theme.backgroundElement} style={styles.appFolderCard}>
+                      <View
+                        style={[
+                          styles.appIconShell,
+                          { borderColor: theme.border, backgroundColor: '#FFFFFF' },
+                        ]}>
+                        <SourceIcon sourceKey={source.key} size={42} />
+                      </View>
+                      <View style={styles.folderCopy}>
+                        <Text style={[styles.appFolderName, { color: theme.text }]} numberOfLines={1}>
+                          {source.label}
+                        </Text>
+                      </View>
+                    </BrutalCard>
+                  </Pressable>
+                ))}
+              </Animated.View>
+            ) : null}
+            {appFolders.length > 4 ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={showAllAppFolders ? 'Show fewer app folders' : 'Show more app folders'}
+                accessibilityState={{ expanded: showAllAppFolders }}
+                onPress={() => setShowAllAppFolders((value) => !value)}
+                style={({ pressed }) => [styles.showMoreButton, pressed && styles.showMorePressed]}>
+                <Text style={[styles.showMoreText, { color: theme.textSecondary }]}>
+                  {showAllAppFolders ? 'SHOW LESS' : 'SHOW MORE'}
+                </Text>
+                <SymbolView
+                  name={
+                    showAllAppFolders
+                      ? { ios: 'chevron.up', android: 'expand_less', web: 'expand_less' }
+                      : { ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }
+                  }
+                  tintColor={theme.textSecondary}
+                  size={17}
+                  style={styles.showMoreIcon}
+                />
+              </Pressable>
+            ) : null}
+          </Animated.View>
         ) : null}
 
-        {appFoldersEnabled ? (
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>YOUR FOLDERS</Text>
-        ) : null}
+        <Animated.View layout={appFolderLayout} style={styles.userFolderSection}>
+          {appFoldersEnabled ? (
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>YOUR FOLDERS</Text>
+          ) : null}
 
-        <View style={styles.grid}>
-          {folders.map((folder) => (
+          <View style={styles.grid}>
+            {folders.map((folder) => (
             <Pressable
               key={folder.id}
               onPress={() => {
@@ -275,25 +336,34 @@ export default function FoldersScreen() {
               }}
               delayLongPress={350}
               style={({ pressed }) => [styles.folderPressable, pressed && styles.pressed]}>
-              <BrutalCard backgroundColor={folder.color} style={styles.folderCard}>
+              <View style={styles.folderTile}>
                 <View
                   style={[
-                    styles.folderIconShell,
-                    { borderColor: theme.border, backgroundColor: 'rgba(255,255,255,0.78)' },
-                  ]}>
-                  <FolderGlyph icon={folder.icon} color="#111111" size={34} />
-                </View>
-                <View style={styles.folderCopy}>
-                  <Text
-                    style={[styles.folderName, { color: readableTextColor(folder.color) }]}
-                    numberOfLines={2}>
-                    {folder.name}
-                  </Text>
-                </View>
-              </BrutalCard>
-            </Pressable>
-          ))}
-        </View>
+                    styles.folderTab,
+                    { backgroundColor: folder.color, borderColor: theme.border },
+                  ]}
+                />
+                <BrutalCard backgroundColor={folder.color} style={styles.folderCard}>
+                  <View
+                    style={[
+                      styles.folderIconShell,
+                      { borderColor: theme.border, backgroundColor: 'rgba(255,255,255,0.78)' },
+                    ]}>
+                    <FolderGlyph icon={folder.icon} color="#111111" size={34} />
+                  </View>
+                  <View style={styles.folderCopy}>
+                    <Text
+                      style={[styles.folderName, { color: readableTextColor(folder.color) }]}
+                      numberOfLines={2}>
+                      {folder.name}
+                    </Text>
+                  </View>
+                </BrutalCard>
+              </View>
+              </Pressable>
+            ))}
+          </View>
+        </Animated.View>
       </ScrollView>
 
       <Modal
@@ -675,7 +745,7 @@ export default function FoldersScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  content: { padding: 18, paddingBottom: 36, gap: 22 },
+  content: { padding: 18, paddingBottom: 132, gap: 22 },
   input: {
     height: 50,
     borderWidth: 3,
@@ -699,11 +769,35 @@ const styles = StyleSheet.create({
   },
   selectedColor: { borderWidth: 5 },
   folderSection: { gap: 13 },
+  userFolderSection: { gap: 13 },
   sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+  showMoreButton: {
+    minHeight: 30,
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingHorizontal: 2,
+    paddingVertical: 4,
+  },
+  showMorePressed: { opacity: 0.55 },
+  showMoreText: { fontSize: 11, fontWeight: '900', letterSpacing: 0.7 },
+  showMoreIcon: { width: 17, height: 17 },
   folderPressable: { width: '47%' },
   pressed: { transform: [{ translateX: 4 }, { translateY: 4 }] },
   folderCopy: { gap: 1, paddingHorizontal: 3 },
+  folderTile: { position: 'relative', paddingTop: 14 },
+  folderTab: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    width: 66,
+    height: 30,
+    borderWidth: 3,
+    borderRadius: 9,
+  },
   folderCard: { minHeight: 142, padding: 14, gap: 10, justifyContent: 'space-between' },
   folderName: { fontSize: 18, lineHeight: 22, fontWeight: '900' },
   appFolderCard: { minHeight: 142, padding: 14, gap: 10, justifyContent: 'space-between' },

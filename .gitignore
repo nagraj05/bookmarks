@@ -33,6 +33,9 @@ yarn-error.*
 # IDE
 .idea/
 
+# Codex local attachments
+.codex-attachments/
+
 # local env files
 .env*.local
 

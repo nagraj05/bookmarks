@@ -237,7 +237,7 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  content: { padding: 18, paddingBottom: 36, gap: 20 },
+  content: { padding: 18, paddingBottom: 132, gap: 20 },
   statsRow: { flexDirection: 'row', gap: 14 },
   statCard: { flex: 1, padding: 14 },
   statNumber: { color: '#111111', fontSize: 30, lineHeight: 32, fontWeight: '900' },

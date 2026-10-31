@@ -236,7 +236,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
-  content: { padding: 18, paddingBottom: 40, gap: 20 },
+  content: { padding: 18, paddingBottom: 132, gap: 20 },
   sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
   stack: { gap: 15 },
   rowCard: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 },
