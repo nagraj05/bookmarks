@@ -1,72 +1,17 @@
-import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BrutalButton } from '@/components/brutal';
 import { Brutal } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { getAvailableUpdate, type UpdateRelease } from '@/lib/app-update';
 
-const LATEST_RELEASE_URL = 'https://api.github.com/repos/nagraj05/bookmarks/releases/latest';
 const UPDATE_LATER_KEY = 'update_later';
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const REMIND_LATER_MS = 24 * 60 * 60 * 1000;
-
-type UpdateRelease = {
-  tag: string;
-  version: string;
-  apkUrl: string;
-};
-
-type GitHubRelease = {
-  tag_name?: unknown;
-  assets?: unknown;
-};
-
-type GitHubAsset = {
-  name?: unknown;
-  browser_download_url?: unknown;
-};
-
-function versionParts(value: string) {
-  const normalized = value.trim().replace(/^v/i, '').split('-')[0];
-  if (!/^\d+(?:\.\d+)*$/.test(normalized)) return null;
-  return normalized.split('.').map(Number);
-}
-
-function isNewerVersion(latest: string, installed: string) {
-  const latestParts = versionParts(latest);
-  const installedParts = versionParts(installed);
-  if (!latestParts || !installedParts) return false;
-
-  const length = Math.max(latestParts.length, installedParts.length);
-  for (let index = 0; index < length; index += 1) {
-    const latestPart = latestParts[index] ?? 0;
-    const installedPart = installedParts[index] ?? 0;
-    if (latestPart !== installedPart) return latestPart > installedPart;
-  }
-  return false;
-}
-
-function parseRelease(value: GitHubRelease): UpdateRelease | null {
-  if (typeof value.tag_name !== 'string' || !Array.isArray(value.assets)) return null;
-
-  const apk = (value.assets as GitHubAsset[]).find(
-    (asset) =>
-      typeof asset.name === 'string' &&
-      asset.name.toLowerCase().endsWith('.apk') &&
-      typeof asset.browser_download_url === 'string',
-  );
-  if (!apk || typeof apk.browser_download_url !== 'string') return null;
-
-  return {
-    tag: value.tag_name,
-    version: value.tag_name.replace(/^v/i, ''),
-    apkUrl: apk.browser_download_url,
-  };
-}
 
 export function AppUpdateModal() {
   const db = useSQLiteContext();
@@ -78,22 +23,14 @@ export function AppUpdateModal() {
   const [downloadError, setDownloadError] = useState(false);
 
   const checkForUpdate = useCallback(async () => {
-    if (Platform.OS !== 'android' || checking.current) return;
+    if (checking.current) return;
     if (Date.now() - lastCheckedAt.current < CHECK_INTERVAL_MS) return;
 
     checking.current = true;
     lastCheckedAt.current = Date.now();
     try {
-      const response = await fetch(LATEST_RELEASE_URL, {
-        headers: { Accept: 'application/vnd.github+json' },
-      });
-      if (!response.ok) return;
-
-      const nextRelease = parseRelease((await response.json()) as GitHubRelease);
-      const installedVersion = Constants.expoConfig?.version;
-      if (!nextRelease || !installedVersion || !isNewerVersion(nextRelease.version, installedVersion)) {
-        return;
-      }
+      const nextRelease = await getAvailableUpdate();
+      if (!nextRelease) return;
 
       const laterRow = await db.getFirstAsync<{ value: string }>(
         'SELECT value FROM app_settings WHERE key = ?',

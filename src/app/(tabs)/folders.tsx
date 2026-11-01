@@ -339,7 +339,12 @@ export default function FoldersScreen() {
                 <View
                   style={[
                     styles.folderTab,
-                    { backgroundColor: folder.color, borderColor: theme.border },
+                    {
+                      backgroundColor: folder.color,
+                      borderColor: theme.border,
+                      shadowColor: theme.shadow,
+                      boxShadow: `5px 4px 0px ${theme.shadow}`,
+                    },
                   ]}
                 />
                 <BrutalCard backgroundColor={folder.color} style={styles.folderCard}>
@@ -788,11 +793,15 @@ const styles = StyleSheet.create({
   folderTab: {
     position: 'absolute',
     top: 0,
-    left: 16,
+    left: 6,
     width: 66,
     height: 30,
     borderWidth: 3,
-    borderRadius: 9,
+    borderRadius: 6,
+    shadowOffset: { width: 5, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
   },
   folderCard: { minHeight: 142, padding: 14, gap: 10, justifyContent: 'space-between' },
   folderName: { fontSize: 18, lineHeight: 22, fontWeight: '900' },

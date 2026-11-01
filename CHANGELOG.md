@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added folder-style tabs to user folder cards
 - Added an animated Show More control that keeps app folders compact until expanded
 - Added a Settings footer with the current app version and a link to the creator's GitHub profile
+- Added a Settings update modal with manual checks, no-update feedback, retries, and direct APK downloads for known updates
 
 ### Changed
 

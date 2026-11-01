@@ -1,15 +1,18 @@
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
+import { useFocusEffect } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BrutalCard, ScreenHeader } from '@/components/brutal';
+import { SettingsUpdateModal } from '@/components/settings-update-modal';
 import { useTheme } from '@/hooks/use-theme';
 import { getAppFoldersEnabled, setAppFoldersEnabled } from '@/lib/app-settings';
+import { getAvailableUpdate, getCachedAvailableUpdate } from '@/lib/app-update';
 import { useAppLock } from '@/providers/app-lock';
 import { type ThemePreference, useThemePreference } from '@/providers/theme-preference';
 
@@ -42,6 +45,23 @@ export default function SettingsScreen() {
   const { enabled: appLockEnabled, authenticating, enableLock, disableLock } = useAppLock();
   const [appFoldersEnabled, setAppFoldersEnabledState] = useState(false);
   const [updatingAppFolders, setUpdatingAppFolders] = useState(false);
+  const [availableUpdate, setAvailableUpdate] = useState(getCachedAvailableUpdate);
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
+
+  const checkForSettingsUpdate = useCallback(async () => {
+    try {
+      const release = await getAvailableUpdate();
+      setAvailableUpdate(release);
+    } catch {
+      // The manual modal provides retry feedback if the background check fails.
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void checkForSettingsUpdate();
+    }, [checkForSettingsUpdate]),
+  );
 
   useEffect(() => {
     let active = true;
@@ -86,7 +106,36 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="Settings" />
+        <ScreenHeader
+          title="Settings"
+          action={
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={availableUpdate ? `Download Bookmarks ${availableUpdate.version}` : 'Check for updates'}
+              onPress={() => setUpdateModalVisible(true)}
+              style={({ pressed }) => [
+                styles.updateButton,
+                {
+                  backgroundColor: availableUpdate ? theme.green : theme.backgroundElement,
+                  borderColor: theme.border,
+                  shadowColor: theme.shadow,
+                  boxShadow: `${pressed ? 1 : 4}px ${pressed ? 1 : 4}px 0px ${theme.shadow}`,
+                },
+                pressed && styles.updateButtonPressed,
+              ]}>
+              <SymbolView
+                name={{
+                  ios: 'arrow.triangle.2.circlepath.circle.fill',
+                  android: 'system_update',
+                  web: 'system_update',
+                }}
+                tintColor={theme.text}
+                size={23}
+                style={styles.updateIcon}
+              />
+            </Pressable>
+          }
+        />
 
         <Text style={[styles.sectionTitle, { color: theme.text }]}>APPEARANCE</Text>
         <View style={styles.themeOptions}>
@@ -237,6 +286,13 @@ export default function SettingsScreen() {
           </Text>
         </View>
       </ScrollView>
+      {updateModalVisible ? (
+        <SettingsUpdateModal
+          knownRelease={availableUpdate}
+          onChecked={setAvailableUpdate}
+          onClose={() => setUpdateModalVisible(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -244,6 +300,20 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { padding: 18, paddingBottom: 132, gap: 20 },
+  updateButton: {
+    width: 42,
+    height: 42,
+    borderWidth: 3,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  updateButtonPressed: { transform: [{ translateX: 3 }, { translateY: 3 }] },
+  updateIcon: { width: 23, height: 23 },
   sectionTitle: { fontSize: 13, fontWeight: '900', letterSpacing: 1.5, marginTop: 4 },
   stack: { gap: 15 },
   rowCard: { padding: 16, flexDirection: 'row', alignItems: 'center', gap: 13 },

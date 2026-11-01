@@ -182,7 +182,7 @@ export default function BookmarkDetailScreen() {
               style={styles.backIcon}
             />
           </Pressable>
-          <Text style={[styles.headerLabel, { color: theme.text }]}>Bookmark details</Text>
+          <Text style={[styles.headerLabel, { color: theme.text }]}>Details</Text>
           <Pressable
             onPress={() => void toggleFavorite()}
             style={[
