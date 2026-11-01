@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-01
+
+### Added
+
+- Added an update icon in Settings with manual checks, no-update feedback, retry handling, and direct APK downloads
+
+### Changed
+
+- Shared detected releases between the automatic update prompt and Settings so known updates open directly with a Download action
+- Refined folder tabs with a compact angled shadow
+- Simplified the bookmark detail header label
+
 ## [1.5.0] - 2026-10-31
 
 ### Added
@@ -13,7 +25,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added folder-style tabs to user folder cards
 - Added an animated Show More control that keeps app folders compact until expanded
 - Added a Settings footer with the current app version and a link to the creator's GitHub profile
-- Added a Settings update modal with manual checks, no-update feedback, retries, and direct APK downloads for known updates
 
 ### Changed
 
@@ -142,7 +153,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Bold neobrutalist interface with responsive light and dark palettes
 - Android, iOS, and web app-icon configuration
 
-[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/nagraj05/bookmarks/compare/v1.5.1...HEAD
+[1.5.1]: https://github.com/nagraj05/bookmarks/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/nagraj05/bookmarks/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/nagraj05/bookmarks/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/nagraj05/bookmarks/compare/v1.3.1...v1.4.0
