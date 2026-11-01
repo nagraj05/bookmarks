@@ -50,3 +50,6 @@ example
 
 # generated local Expo module build output
 /modules/*/android/build/
+
+# Local Remotion promotional video workspace and renders
+/video/
